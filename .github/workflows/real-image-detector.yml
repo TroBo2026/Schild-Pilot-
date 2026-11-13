@@ -66,6 +66,7 @@ jobs:
           )" \
             --license-file "/tmp/traffic-signs-extracted/$LICENSE_PATH" \
             --output data/detection
+          mkdir -p artifacts
           cp "/tmp/traffic-signs-extracted/$LICENSE_PATH" artifacts/traffic_signs_raw_license.txt
       - name: Audit converted dataset
         run: python -m training.audit_detection_dataset --data data/detection --output artifacts/detection_audit.json
