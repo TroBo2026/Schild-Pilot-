@@ -67,3 +67,10 @@ Wir aktivieren kein wahlloses Scraping. Weitere echte Bilddaten werden erst nach
 ## Sicherheitsgrenzen
 
 Schild Pilot ist ein Forschungs- und Lernprototyp. Keine Fahrzeugsteuerung, keine Fahrerassistenzfreigabe und keine Tests während der Fahrt. Für eine spätere reale Anwendung wären unabhängige, geografisch getrennte reale Testdaten, Detektion, robuste Unsicherheitsbehandlung, Kalibrierung und umfangreiche Sicherheitsvalidierung erforderlich.
+
+
+## Validierungsbasierte Schwellenwertwahl
+
+Das neue Skript `training.calibrate_thresholds` liest ausschließlich den Validierungs-Split und wählt ein Paar aus Mindestscore und Abstand zur zweitbesten Klasse. Eine feste Schwellenwert-Suche in 0,05-Schritten maximiert die Genauigkeit der akzeptierten Vorhersagen unter der Nebenbedingung einer Mindestabdeckung von standardmäßig 80 %. Die resultierenden Werte werden in `artifacts/sign_classifier/calibrated_thresholds.json` gespeichert und von der anschließenden Testauswertung automatisch verwendet.
+
+Die Kalibrierung ist eine Auswahl eines Betriebspunkts auf Validierungsdaten, keine statistische Wahrscheinlichkeitskalibrierung. Sie garantiert keine Fehlerfreiheit. Die Testdaten werden weder zur Schwellenwertwahl noch zur Modellauswahl verwendet. Der Testbericht dokumentiert die tatsächlich verwendete Schwellenwertquelle.
