@@ -32,7 +32,10 @@
 
 ## Phase 2 – Detektion in vollständigen Straßenbildern
 - [x] Technisches COCO-Detektionsdaten-Audit mit Bounding-Box-, Referenz-, Klassen- und Exact-Duplicate-Prüfung vorbereiten
-- [ ] Detektionsdatensatz mit Bounding Boxes und klaren Nutzungsrechten auswählen
+- [x] Kleinen Realbild-Kandidaten TrafficSigns-Raw (CC BY 4.0, 4.185 Bilder, 8.249 geprüfte Boxen) identifizieren und Lizenz-/Provenienzprüfung dokumentieren
+- [ ] TrafficSigns-Raw-Archiv, Lizenzdatei und Prüfsummen vor Import unabhängig verifizieren
+- [ ] Datensatz ins COCO-Format überführen und technisches Audit ausführen
+- [ ] Erste Detektions-Baseline getrennt vom Klassifikator trainieren und bewerten
 - [ ] Detektor getrennt von der Klassifikation evaluieren
 - [ ] Mehrere Schilder pro Foto lokalisieren
 - [ ] Kleine, verdeckte, teilweise sichtbare und unbekannte Schilder berücksichtigen
