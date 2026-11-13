@@ -4,6 +4,7 @@
 - [x] Repository und Projektstruktur
 - [x] Mobile Fotoaufnahme/-auswahl im Browser
 - [x] Bildvorschau und klare Statusanzeige
+- [x] Modellunabhängige Enthaltungsregel und Unit-Tests
 - [ ] Modell-Schnittstelle
 
 ## Phase 1 – Klassifikation
