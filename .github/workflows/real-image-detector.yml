@@ -7,6 +7,9 @@ on:
       - "training/train_detector.py"
       - ".github/workflows/real-image-detector.yml"
   workflow_dispatch:
+concurrency:
+  group: schild-pilot-detector-${{ github.ref }}
+  cancel-in-progress: true
 permissions:
   contents: read
 jobs:
