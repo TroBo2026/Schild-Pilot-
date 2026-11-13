@@ -1,0 +1,66 @@
+name: Real-image traffic sign detector pilot
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  detector-pilot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - name: Install CPU training dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
+          python -m pip install "Pillow>=10.0"
+      - name: Download the versioned Zenodo release
+        run: |
+          curl --fail --location --retry 3 \
+            "https://zenodo.org/records/22052437/files/object-centric-low-data-datasets-v0.2.0.zip?download=1" \
+            --output /tmp/traffic-signs-release.zip
+          echo "e1e162d114cfe14b209ab7614511524b0c558db72935d3e32c096f87150aff86  /tmp/traffic-signs-release.zip" | sha256sum --check
+      - name: Extract only TrafficSigns-Raw and its license notice
+        run: |
+          python - <<'PY'
+          import zipfile
+          archive = "/tmp/traffic-signs-release.zip"
+          with zipfile.ZipFile(archive) as z:
+              names = z.namelist()
+              required = [
+                  "object-centric-low-data-datasets-v0.2.0/traffic_signs_raw/README.md",
+                  "object-centric-low-data-datasets-v0.2.0/LICENSES/traffic_signs_license.txt",
+              ]
+              for item in required:
+                  if item not in names:
+                      raise SystemExit(f"Archive-Datei fehlt: {item}")
+              selected = [n for n in names if
+                  n.startswith("object-centric-low-data-datasets-v0.2.0/traffic_signs_raw/") or
+                  n == "object-centric-low-data-datasets-v0.2.0/LICENSES/traffic_signs_license.txt"]
+              z.extractall("/tmp/traffic-signs-extracted", selected)
+          PY
+      - name: Verify license and convert original splits to COCO
+        run: |
+          python -m training.prepare_traffic_signs_raw \
+            --source /tmp/traffic-signs-extracted/object-centric-low-data-datasets-v0.2.0/traffic_signs_raw \
+            --license-file /tmp/traffic-signs-extracted/object-centric-low-data-datasets-v0.2.0/LICENSES/traffic_signs_license.txt \
+            --output data/detection
+      - name: Audit converted dataset
+        run: python -m training.audit_detection_dataset --data data/detection --output artifacts/detection_audit.json
+      - name: Train compact detector and validate
+        run: python -m training.train_detector --data data/detection --epochs 2 --batch-size 2 --workers 2
+      - name: Upload detector, metrics, license and audit
+        uses: actions/upload-artifact@v4
+        with:
+          name: schild-pilot-real-image-detector
+          path: |
+            artifacts/sign_detector/
+            artifacts/detection_audit.json
+            artifacts/traffic_signs_raw_intake.json
+            /tmp/traffic-signs-extracted/object-centric-low-data-datasets-v0.2.0/LICENSES/traffic_signs_license.txt
+          if-no-files-found: error
+          retention-days: 7
