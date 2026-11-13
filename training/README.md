@@ -74,3 +74,17 @@ Schild Pilot ist ein Forschungs- und Lernprototyp. Keine Fahrzeugsteuerung, kein
 Das neue Skript `training.calibrate_thresholds` liest ausschließlich den Validierungs-Split und wählt ein Paar aus Mindestscore und Abstand zur zweitbesten Klasse. Eine feste Schwellenwert-Suche in 0,05-Schritten maximiert die Genauigkeit der akzeptierten Vorhersagen unter der Nebenbedingung einer Mindestabdeckung von standardmäßig 80 %. Die resultierenden Werte werden in `artifacts/sign_classifier/calibrated_thresholds.json` gespeichert und von der anschließenden Testauswertung automatisch verwendet.
 
 Die Kalibrierung ist eine Auswahl eines Betriebspunkts auf Validierungsdaten, keine statistische Wahrscheinlichkeitskalibrierung. Sie garantiert keine Fehlerfreiheit. Die Testdaten werden weder zur Schwellenwertwahl noch zur Modellauswahl verwendet. Der Testbericht dokumentiert die tatsächlich verwendete Schwellenwertquelle.
+
+
+## Detektionsdaten: Intake-Audit und Lizenz-Screening
+
+Für vollständige Straßenbilder ist eine getrennte COCO-artige Datenstruktur vorbereitet. `training.audit_detection_dataset` prüft die drei Splits auf fehlende Dateien, ungültige IDs/Referenzen, abweichende Kategorien, fehlerhafte Bildmaße, Bounding Boxes außerhalb des Bildes sowie byte-identische Bilder über Split-Grenzen. Das Audit ist ein technischer Vorabcheck, kein Nachweis für korrekte Labels, Szenen-Unabhängigkeit oder Nutzungsrechte. Die Tests verwenden synthetische Mini-Fixtures; es wurden keine echten Straßendatensätze importiert.
+
+### Kandidatenprüfung (13.11.2026)
+
+- **GTSDB:** 900 natürliche Straßenbilder, 600 Training und 300 Evaluation; Bounding-Box-Annotationen und 0–6 Schilder pro Bild. Die offizielle Benchmark-Seite beschreibt Umfang und Aufgabe, nennt auf der geprüften Seite aber keine eindeutige kommerzielle Bildlizenz. Daher vorerst nicht importieren. Quelle: https://benchmark.ini.rub.de/gtsdb_dataset.html
+- **Mapillary-Bilder:** Mapillary erklärt, dass Nutzerbilder unter CC BY-SA geteilt werden. Das kann Attribution und Share-Alike-Pflichten auslösen; zusätzlich sind aktuelle Nutzungsbedingungen und die konkrete Modellnutzung zu prüfen. Nicht automatisch für ein proprietäres kommerzielles Modell freigegeben. Quelle: https://help.mapillary.com/hc/en-us/articles/115001770409-CC-BY-SA-license-for-open-data
+- **BDD100K:** Die Datenlizenz erlaubt kommerzielle Nutzung laut Lizenztext nur BDD-/BAIR-Commons-Mitgliedern und deren Affiliates; das ist keine allgemeine kommerzielle Freigabe. Außerdem ist der Gesamtdatensatz groß. Daher keine Übernahme ohne geklärte Berechtigung. Quelle: https://github.com/bdd100k/bdd100k/blob/master/doc/source/download.rst
+- **TT100K:** Die offizielle Projektseite nennt CC BY-NC. Wegen der Nicht-kommerziell-Bedingung nicht als Grundlage für ein späteres kommerzielles GEPARD-Produkt geeignet. Quelle: https://cg.cs.tsinghua.edu.cn/traffic-sign/
+
+**Entscheidung:** Noch kein realer Detektionsdatensatz wird heruntergeladen oder ins Repository übernommen. GTSDB bleibt ein möglicher kleiner Forschungskandidat, bis die Originalbedingungen belastbar geklärt sind. Sekundäre Lizenzübersichten sind keine Rechtsfreigabe.
