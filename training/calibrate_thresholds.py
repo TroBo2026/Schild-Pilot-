@@ -5,10 +5,7 @@ import argparse
 import json
 from pathlib import Path
 
-import torch
-from torch import nn
-from torch.utils.data import DataLoader
-from torchvision import datasets, models, transforms
+import math
 
 
 def calibrate_thresholds(labels, probabilities, *, min_coverage=0.80):
@@ -25,7 +22,7 @@ def calibrate_thresholds(labels, probabilities, *, min_coverage=0.80):
     confidence, margins, correct = [], [], []
     for truth, row in zip(labels, probabilities):
         values = [float(x) for x in row]
-        if not values or any(not torch.isfinite(torch.tensor(x)).item() or x < 0 for x in values):
+        if not values or any(not math.isfinite(x) or x < 0 for x in values):
             raise ValueError("Wahrscheinlichkeiten müssen endlich und nicht-negativ sein.")
         total = sum(values)
         if total <= 0:
@@ -72,6 +69,11 @@ def calibrate_thresholds(labels, probabilities, *, min_coverage=0.80):
 
 
 def main():
+    import torch
+    from torch import nn
+    from torch.utils.data import DataLoader
+    from torchvision import datasets, models, transforms
+
     parser = argparse.ArgumentParser()
     parser.add_argument("--data", type=Path, default=Path("data/signs/val"))
     parser.add_argument("--model-dir", type=Path, default=Path("artifacts/sign_classifier"))
