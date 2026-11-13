@@ -8,10 +8,12 @@
 - [ ] Modell-Schnittstelle
 
 ## Phase 1 – Klassifikation
-- [ ] Datensatz und Lizenz prüfen
+- [x] Datensatzstruktur-Audit mit Split- und Hashprüfung
+- [x] Testauswertung mit Kennzahlen und Konfusionsmatrix vorbereitet
+- [ ] Datensatz und Lizenz für kommerzielle GEPARD-Perspektive freigeben
 - [ ] Klassenverzeichnis/Label-Mapping definieren
-- [ ] Transfer-Learning-Trainingsskript
-- [ ] Validierung, Konfusionsmatrix und Fehlersammlung
+- [ ] Trainingslauf mit dokumentierter Datenversion
+- [ ] Validierung, Kalibrierung und Fehlersammlung
 - [ ] Modellversion und Metadaten
 
 ## Phase 2 – Detektion
