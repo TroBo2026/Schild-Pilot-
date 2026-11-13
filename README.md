@@ -14,7 +14,7 @@ Schild Pilot soll Verkehrszeichen zunächst auf einzelnen Bildern erkennen. Spä
 
 ## Projektstatus
 **Phase 0:** mobiles Foto-Frontend und Projektstruktur abgeschlossen.
-**Phase 1:** konservative Unsicherheitsentscheidung und Unit-Tests ergänzt; Modelltraining noch nicht ausgeführt.
+**Phase 1:** Unsicherheitsentscheidung, Datensatz-Audit und Testauswertung vorbereitet; Modelltraining noch nicht ausgeführt.
 **Phase 2:** Detektion mehrerer Schilder in vollständigen Straßenfotos.
 **Phase 3:** Optimierung für Smartphone und Offline-Tests.
 
