@@ -1,17 +1,19 @@
 """Prepare a small, class-balanced pilot subset from Fraunhofer's Synset Signset.
 
-The source contains synthetic rendered traffic-sign scenes, not real camera photos.
-Only a bounded subset is materialized so a free CPU CI runner can run a pilot.
+The published dataset exposes train and validation splits (not a test split).
+We derive disjoint val/test subsets from its validation split and document this.
+Images are synthetic rendered scenes, not real camera photographs.
 """
 from __future__ import annotations
 
 import argparse
 import json
+import random
 import re
+import shutil
 from pathlib import Path
 
 from datasets import load_dataset
-
 
 DATASET_ID = "FraunhoferIOSB/Synset-Signset-Germany"
 LICENSE = "CC-BY-4.0"
@@ -23,9 +25,8 @@ def safe_class_name(label: int, name: str) -> str:
 
 
 def grouped_indices(split):
-    labels = split["label"]
     groups: dict[int, list[int]] = {}
-    for index, label in enumerate(labels):
+    for index, label in enumerate(split["label"]):
         groups.setdefault(int(label), []).append(index)
     return groups
 
@@ -35,10 +36,9 @@ def write_rows(split, indices, output: Path, class_names: dict[int, str]) -> int
     for index in indices:
         row = split[int(index)]
         label = int(row["label"])
-        image = row["image"].convert("RGB")
         folder = output / safe_class_name(label, class_names[label])
         folder.mkdir(parents=True, exist_ok=True)
-        image.save(folder / f"{index:07d}.jpg", quality=92)
+        row["image"].convert("RGB").save(folder / f"{index:07d}.jpg", quality=92)
         count += 1
     return count
 
@@ -57,18 +57,15 @@ def main() -> None:
 
     print(f"Lade {DATASET_ID} / {args.config} …", flush=True)
     dataset = load_dataset(DATASET_ID, args.config)
-    if "train" not in dataset or "test" not in dataset:
-        raise SystemExit(f"Erwartete train/test-Splits fehlen: {list(dataset.keys())}")
+    if "train" not in dataset or "validation" not in dataset:
+        raise SystemExit(f"Erwartete train/validation-Splits fehlen: {list(dataset.keys())}")
 
-    train, test = dataset["train"], dataset["test"]
-    train_groups = grouped_indices(train)
-    test_groups = grouped_indices(test)
-    class_ids = sorted(set(train_groups) & set(test_groups))
+    train, source_val = dataset["train"], dataset["validation"]
+    train_groups, val_groups = grouped_indices(train), grouped_indices(source_val)
+    class_ids = sorted(set(train_groups) & set(val_groups))
     if not class_ids:
-        raise SystemExit("Keine gemeinsamen Klassen in Train- und Testsplit gefunden.")
+        raise SystemExit("Keine gemeinsamen Klassen in train/validation gefunden.")
 
-    # Deterministic per-class selection; test remains from the source's held-out split.
-    import random
     rng = random.Random(args.seed)
     train_indices: list[int] = []
     val_indices: list[int] = []
@@ -76,32 +73,31 @@ def main() -> None:
     class_names: dict[int, str] = {}
 
     for label in class_ids:
-        train_pool = list(train_groups[label])
-        test_pool = list(test_groups[label])
+        train_pool, heldout_pool = list(train_groups[label]), list(val_groups[label])
         rng.shuffle(train_pool)
-        rng.shuffle(test_pool)
+        rng.shuffle(heldout_pool)
         class_names[label] = str(train[train_pool[0]]["class_name"])
-        needed_train = args.per_class_train + args.per_class_val
-        if len(train_pool) < needed_train or len(test_pool) < args.per_class_test:
+        if len(train_pool) < args.per_class_train:
+            raise SystemExit(f"Klasse {label}: zu wenige Trainingsbilder ({len(train_pool)}).")
+        if len(heldout_pool) < args.per_class_val + args.per_class_test:
             raise SystemExit(
-                f"Klasse {label} hat zu wenig Daten: train={len(train_pool)}, "
-                f"test={len(test_pool)}"
+                f"Klasse {label}: validation hat {len(heldout_pool)} Bilder; "
+                f"benötigt werden {args.per_class_val + args.per_class_test}."
             )
         train_indices.extend(train_pool[:args.per_class_train])
-        val_indices.extend(train_pool[args.per_class_train:needed_train])
-        test_indices.extend(test_pool[:args.per_class_test])
+        val_indices.extend(heldout_pool[:args.per_class_val])
+        test_indices.extend(heldout_pool[args.per_class_val:args.per_class_val + args.per_class_test])
 
     for split_name in ("train", "val", "test"):
         target = args.output / split_name
         if target.exists():
-            import shutil
             shutil.rmtree(target)
         target.mkdir(parents=True, exist_ok=True)
 
     counts = {
         "train": write_rows(train, train_indices, args.output / "train", class_names),
-        "val": write_rows(train, val_indices, args.output / "val", class_names),
-        "test": write_rows(test, test_indices, args.output / "test", class_names),
+        "val": write_rows(source_val, val_indices, args.output / "val", class_names),
+        "test": write_rows(source_val, test_indices, args.output / "test", class_names),
     }
     manifest = {
         "dataset": DATASET_ID,
@@ -109,6 +105,7 @@ def main() -> None:
         "license": LICENSE,
         "source": "https://huggingface.co/datasets/FraunhoferIOSB/Synset-Signset-Germany",
         "source_type": "synthetic_rendered_traffic_sign_scenes",
+        "source_splits": {"train": "train", "val": "validation", "test": "validation"},
         "seed": args.seed,
         "classes": len(class_ids),
         "class_names": {str(k): v for k, v in class_names.items()},
@@ -120,6 +117,7 @@ def main() -> None:
         },
         "limitations": [
             "Synthetic scenes; not real camera photographs.",
+            "Validation source split is divided into disjoint val/test subsets; no official test split is published in this configuration.",
             "German sign taxonomy only; not international coverage.",
             "Classification pilot; not a full-scene detector.",
             "Not validated for vehicle or safety-critical use.",
