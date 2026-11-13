@@ -35,9 +35,14 @@ def yolo_to_coco(line: str, image_width: int, image_height: int) -> tuple[int, l
     y = (cy - height / 2) * image_height
     w = width * image_width
     h = height * image_height
-    if x < 0 or y < 0 or x + w > image_width + 1e-5 or y + h > image_height + 1e-5:
-        raise ValueError("Bounding Box liegt außerhalb des Bildes.")
-    return class_id + 1, [x, y, w, h]
+    # Clip edge-crossing annotations to the visible image region. Street-view
+    # boxes may legitimately touch/cross a crop boundary; COCO boxes must lie
+    # inside the image. Fully outside or zero-area boxes remain hard errors.
+    x1, y1 = max(0.0, x), max(0.0, y)
+    x2, y2 = min(float(image_width), x + w), min(float(image_height), y + h)
+    if x2 <= x1 or y2 <= y1:
+        raise ValueError("Bounding Box liegt vollständig außerhalb des Bildes oder hat keine sichtbare Fläche.")
+    return class_id + 1, [x1, y1, x2 - x1, y2 - y1]
 
 
 def convert(source: Path, output: Path, license_file: Path) -> dict:
@@ -48,7 +53,8 @@ def convert(source: Path, output: Path, license_file: Path) -> dict:
         raise ValueError("Die erwartete TrafficSigns-spezifische CC BY 4.0-Lizenznotiz fehlt oder ist unvollständig.")
     if not (source / "README.md").is_file() or "TrafficSigns-Raw" not in (source / "README.md").read_text(encoding="utf-8"):
         raise ValueError("TrafficSigns-Raw-README fehlt oder stimmt nicht.")
-    report = {"source": str(source), "license": "CC BY 4.0", "splits": {}}
+    report = {"source": str(source), "license": "CC BY 4.0", "splits": {},
+              "boundary_clipped_boxes": 0, "notes": ["Boxes crossing image borders are clipped to the visible image area; fully invisible boxes are rejected."]}
     for split, (image_rel, label_rel) in SPLITS.items():
         image_dir, label_dir = source / image_rel, source / label_rel
         if not image_dir.is_dir() or not label_dir.is_dir():
@@ -79,6 +85,14 @@ def convert(source: Path, output: Path, license_file: Path) -> dict:
                 raise ValueError(f"Leere Labeldatei: {label_path}")
             for line in rows:
                 category_id, bbox = yolo_to_coco(line, width, height)
+                # Record edge clipping by comparing the source normalized box
+                # against the converted visible box.
+                parts = line.split()
+                _, cx, cy, bw, bh = int(parts[0]), *map(float, parts[1:])
+                raw = [(cx - bw / 2) * width, (cy - bh / 2) * height, bw * width, bh * height]
+                if (abs(raw[0] - bbox[0]) > 1e-5 or abs(raw[1] - bbox[1]) > 1e-5 or
+                    abs(raw[2] - bbox[2]) > 1e-5 or abs(raw[3] - bbox[3]) > 1e-5):
+                    report["boundary_clipped_boxes"] += 1
                 coco_annotations.append({
                     "id": annotation_id, "image_id": image_id, "category_id": category_id,
                     "bbox": bbox, "area": bbox[2] * bbox[3], "iscrowd": 0,
