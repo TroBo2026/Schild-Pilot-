@@ -16,7 +16,7 @@
 - [x] Evaluation mit Top-1, Top-5, Macro-Top-1, Abdeckung und Genauigkeit akzeptierter Vorhersagen
 - [x] Kennzahlen je Klasse und Konfusionsmatrix
 - [x] Validierungsbasiertes Schwellenwert-Skript implementieren (Mindestabdeckung 80 %; Testsplit bleibt getrennt)
-- [ ] Kalibrierungs- und Testlauf mit den neuen Schwellenwerten erfolgreich abschließen und Ergebnisse prüfen
+- [x] Kalibrierungs- und Testlauf mit validierungsbasierten Schwellenwerten abgeschlossen (Lauf #6; siehe Trainingsbericht)
 - [ ] Unabhängigen realen Foto-Benchmark mit klaren Nutzungsrechten auswählen
 - [ ] Fehlersammlung und gezielte Analyse schwieriger Klassen
 - [ ] Lizenz-/Rechtsprüfung für eine mögliche kommerzielle GEPARD-Nutzung
@@ -34,8 +34,8 @@
 - [x] Technisches COCO-Detektionsdaten-Audit mit Bounding-Box-, Referenz-, Klassen- und Exact-Duplicate-Prüfung vorbereiten
 - [x] Kleinen Realbild-Kandidaten TrafficSigns-Raw (CC BY 4.0, 4.185 Bilder, 8.249 geprüfte Boxen) identifizieren und Lizenz-/Provenienzprüfung dokumentieren
 - [ ] TrafficSigns-Raw-Archiv, Lizenzdatei und Prüfsummen vor Import unabhängig verifizieren
-- [ ] Datensatz ins COCO-Format überführen und technisches Audit ausführen
-- [ ] Erste Detektions-Baseline getrennt vom Klassifikator trainieren und bewerten
+- [x] Datensatz-Intake, YOLO-zu-COCO-Konvertierung und technisches Audit im Detektor-Workflow implementieren
+- [ ] Erste Detektions-Baseline getrennt vom Klassifikator trainieren und bewerten (Workflow läuft)
 - [ ] Detektor getrennt von der Klassifikation evaluieren
 - [ ] Mehrere Schilder pro Foto lokalisieren
 - [ ] Kleine, verdeckte, teilweise sichtbare und unbekannte Schilder berücksichtigen
@@ -57,3 +57,6 @@
 - Keine Nutzerbilder ohne ausdrückliche Zustimmung hochladen.
 - Keine Verbindung zur Fahrzeugsteuerung und keine Fahrassistenzfreigabe.
 - Smartphone-Tests ausschließlich im Stand.
+
+
+Aktueller Detektor-Workflow: https://github.com/TroBo2026/Schild-Pilot-/actions/workflows/real-image-detector.yml
