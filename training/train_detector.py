@@ -119,8 +119,7 @@ def main():
                               num_workers=args.workers, collate_fn=collate)
     val_loader = DataLoader(val_ds, batch_size=args.batch_size, shuffle=False,
                             num_workers=args.workers, collate_fn=collate)
-    weights = "DEFAULT"
-    model = fasterrcnn_mobilenet_v3_large_320_fpn(weights=weights)
+    model = fasterrcnn_mobilenet_v3_large_320_fpn(weights=None, weights_backbone=None)
     in_features = model.roi_heads.box_predictor.cls_score.in_features
     model.roi_heads.box_predictor = FastRCNNPredictor(in_features, 3)
     model.to(device)
@@ -158,7 +157,7 @@ def main():
         "classes": ["background", "Traffic Sign", "Damaged Traffic Sign"],
         "epochs": args.epochs, "best_validation_f1": best_f1,
         "training_images": len(train_ds), "validation_images": len(val_ds),
-        "pretrained_initialization": "Torchvision COCO weights",
+        "pretrained_initialization": "random initialization; no external detection dataset weights",
         "evaluation": "greedy IoU>=0.5 precision/recall at score>=0.25; not COCO mAP",
         "limitations": ["Two-class dataset only", "Small pilot dataset",
                         "No independent external benchmark", "Not safety validated"]
