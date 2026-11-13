@@ -31,5 +31,23 @@ https://docs.pytorch.org/tutorials/beginner/transfer_learning_tutorial.html
 ## Globale Abdeckung
 Nach dem deutschen Prototyp brauchen wir weitere Datensätze mit sauber dokumentierten Nutzungsbedingungen und unterschiedlichen nationalen Verkehrszeichen-Taxonomien. Klassen dürfen nicht allein aufgrund ähnlicher Symbole zusammengelegt werden: Bedeutung und rechtliche Zuordnung können je Land abweichen.
 
+## Lokale Datenprüfung und Evaluation
+
+Vor dem Training die Datenstruktur prüfen:
+
+```bash
+python -m training.audit_dataset --data data/signs
+```
+
+Der Audit prüft fehlende Splits/Klassen, leere Klassen und identische Dateien über mehrere Splits hinweg. Er erkennt keine nahezu identischen Bilder oder zusammengehörigen Videoframes; dafür ist zusätzlich eine szenen- bzw. trackbasierte Trennung nötig.
+
+Nach dem Training ausschließlich den separaten Testsplit auswerten:
+
+```bash
+python -m training.evaluate_classifier --data data/signs/test
+```
+
+Erzeugt werden `artifacts/evaluation/metrics.json` und `confusion_matrix.csv`. Die Kennzahlen sind Forschungsmetriken, keine Sicherheitsfreigabe.
+
 ## Keine automatische Web-Bildersammlung
 Wir aktivieren kein wahlloses Scraping. Bilder werden erst nach Lizenzprüfung und sauberer Kennzeichnung aufgenommen.
