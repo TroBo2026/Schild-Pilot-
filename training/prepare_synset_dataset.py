@@ -47,9 +47,9 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--output", type=Path, default=Path("data/signs"))
     parser.add_argument("--config", default="Cycles")
-    parser.add_argument("--per-class-train", type=int, default=20)
-    parser.add_argument("--per-class-val", type=int, default=5)
-    parser.add_argument("--per-class-test", type=int, default=5)
+    parser.add_argument("--per-class-train", type=int, default=80)
+    parser.add_argument("--per-class-val", type=int, default=10)
+    parser.add_argument("--per-class-test", type=int, default=10)
     parser.add_argument("--seed", type=int, default=20261113)
     args = parser.parse_args()
     if min(args.per_class_train, args.per_class_val, args.per_class_test) < 1:
