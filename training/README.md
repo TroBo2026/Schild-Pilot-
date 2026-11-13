@@ -88,3 +88,23 @@ Für vollständige Straßenbilder ist eine getrennte COCO-artige Datenstruktur v
 - **TT100K:** Die offizielle Projektseite nennt CC BY-NC. Wegen der Nicht-kommerziell-Bedingung nicht als Grundlage für ein späteres kommerzielles GEPARD-Produkt geeignet. Quelle: https://cg.cs.tsinghua.edu.cn/traffic-sign/
 
 **Entscheidung:** Noch kein realer Detektionsdatensatz wird heruntergeladen oder ins Repository übernommen. GTSDB bleibt ein möglicher kleiner Forschungskandidat, bis die Originalbedingungen belastbar geklärt sind. Sekundäre Lizenzübersichten sind keine Rechtsfreigabe.
+
+
+### Neuer Kandidat für einen ersten Realbild-Detektionspilot
+
+**TrafficSigns-Raw** aus *Object-Centric Low-Data Datasets*, Version 0.2.0 (Zenodo, veröffentlicht am 22.08.2026), ist der derzeit stärkste geprüfte Kandidat für einen kleinen echten Bildpilot:
+
+- 4.185 variable Straßenbild-Aufnahmen, 8.249 manuell überprüfte Bounding Boxes
+- 3.167 Train-, 628 Val- und 390 Testbilder
+- zwei Klassen: „Traffic Sign“ und „Damaged Traffic Sign“
+- Direkte Veröffentlichung der TrafficSigns-Raw-Bilder; nicht mit den separat behandelten Cityscapes-/COCO-Teildatensätzen verwechseln
+- Zenodo nennt CC BY 4.0 für die direkt veröffentlichten TrafficSigns-Daten; die zugehörige Arbeit beschreibt die Bildquelle als autoreneigene Straßenbilder und die Boxen als detector-vorgeschlagen und manuell überprüft
+
+Quellen:
+- Zenodo-Version 0.2.0: https://zenodo.org/records/22052437
+- Begleit-Repository und Release-Dokumentation: https://github.com/Latzi/object-centric-low-data-datasets
+- Begleitpublikation: https://arxiv.org/abs/2606.21113
+
+**Entscheidung:** Für einen begrenzten, nicht sicherheitskritischen Forschungs-Pilot geeignet, vorbehaltlich erneuter Prüfung der mitgelieferten Lizenzdatei, Attribution, Datenschutz-/Bildinhalte und Prüfsummen beim konkreten Download. Die zwei Klassen sind nur eine grobe Schilder-/Zustandsdetektion; sie ersetzen keine 211-Klassen-Schilderklassifikation und bilden keine internationale Taxonomie ab. Der Datensatz ist relativ klein und visuell eher sauber; Ergebnisse müssen entsprechend eingeordnet werden. Vor jeder Produkt- oder GEPARD-Nutzung ist eine gesonderte Rechte- und Datenschutzprüfung erforderlich.
+
+Der Datensatz ist noch nicht ins Repository geladen. Vor dem Import werden nur die TrafficSigns-Raw-Dateien extrahiert, Lizenz und Checksummen geprüft, die gelieferten Train/Val/Test-Gruppen unverändert übernommen und das neue COCO-Audit ausgeführt. Erst nach erfolgreichem Audit wird ein kleiner Detektions-Baseline-Lauf gestartet. Die Testdaten bleiben bis zur finalen Auswertung unangetastet.
