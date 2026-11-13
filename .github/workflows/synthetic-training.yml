@@ -1,0 +1,47 @@
+name: Synthetic sign classifier pilot
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "training/prepare_synset_dataset.py"
+      - ".github/workflows/synthetic-training.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  train-pilot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+      - name: Install training dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
+          python -m pip install "datasets>=3.0" "Pillow>=10.0" "numpy>=1.26" "scikit-learn>=1.4" "matplotlib>=3.8"
+      - name: Prepare balanced, licensed pilot subset
+        run: |
+          python -m training.prepare_synset_dataset --per-class-train 20 --per-class-val 5 --per-class-test 5
+      - name: Audit prepared dataset
+        run: python -m training.audit_dataset --data data/signs
+      - name: Train small CPU pilot
+        run: python -m training.train_classifier --data data/signs --epochs 2 --batch-size 32 --image-size 128 --workers 2
+      - name: Evaluate on held-out source split
+        run: python -m training.evaluate_classifier --data data/signs/test
+      - name: Upload model, metrics and source manifest
+        uses: actions/upload-artifact@v4
+        with:
+          name: schild-pilot-synthetic-classifier
+          path: |
+            artifacts/sign_classifier/
+            artifacts/evaluation/
+            data/signs/source_manifest.json
+          if-no-files-found: error
+          retention-days: 7
