@@ -15,7 +15,8 @@
 - [x] Modellmetadaten und Checkpoint-Erzeugung
 - [x] Evaluation mit Top-1, Top-5, Macro-Top-1, Abdeckung und Genauigkeit akzeptierter Vorhersagen
 - [x] Kennzahlen je Klasse und Konfusionsmatrix
-- [ ] Unsicherheitsschwellen auf Validierungsdaten kalibrieren und vor dem Test festlegen
+- [x] Validierungsbasiertes Schwellenwert-Skript implementieren (Mindestabdeckung 80 %; Testsplit bleibt getrennt)
+- [ ] Kalibrierungs- und Testlauf mit den neuen Schwellenwerten erfolgreich abschließen und Ergebnisse prüfen
 - [ ] Unabhängigen realen Foto-Benchmark mit klaren Nutzungsrechten auswählen
 - [ ] Fehlersammlung und gezielte Analyse schwieriger Klassen
 - [ ] Lizenz-/Rechtsprüfung für eine mögliche kommerzielle GEPARD-Nutzung
