@@ -6,6 +6,7 @@ on:
       - "training/prepare_synset_dataset.py"
       - "training/train_classifier.py"
       - "training/evaluate_classifier.py"
+      - "training/calibrate_thresholds.py"
       - ".github/workflows/synthetic-training.yml"
   workflow_dispatch:
 permissions:
@@ -31,7 +32,9 @@ jobs:
         run: python -m training.audit_dataset --data data/signs
       - name: Fine-tune ResNet18 on CPU
         run: python -m training.train_classifier --data data/signs --epochs 8 --batch-size 32 --image-size 160 --workers 2 --patience 3
-      - name: Evaluate on held-out derived test split
+      - name: Calibrate abstention thresholds on validation split only
+        run: python -m training.calibrate_thresholds --data data/signs/val --min-coverage 0.80
+      - name: Evaluate once on held-out derived test split
         run: python -m training.evaluate_classifier --data data/signs/test
       - name: Upload model metrics and source manifest
         uses: actions/upload-artifact@v4
