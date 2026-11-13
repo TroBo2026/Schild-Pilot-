@@ -13,8 +13,8 @@ Schild Pilot soll Verkehrszeichen zunächst auf einzelnen Bildern erkennen. Spä
 5. Evaluation auf getrennten, bisher ungesehenen Testbildern
 
 ## Projektstatus
-**Phase 0:** mobiles Foto-Frontend und Projektstruktur.
-**Phase 1:** Datenprüfung, erste Klassifikation und Evaluation.
+**Phase 0:** mobiles Foto-Frontend und Projektstruktur abgeschlossen.
+**Phase 1:** konservative Unsicherheitsentscheidung und Unit-Tests ergänzt; Modelltraining noch nicht ausgeführt.
 **Phase 2:** Detektion mehrerer Schilder in vollständigen Straßenfotos.
 **Phase 3:** Optimierung für Smartphone und Offline-Tests.
 
@@ -25,6 +25,16 @@ Schild Pilot soll Verkehrszeichen zunächst auf einzelnen Bildern erkennen. Spä
 - Web-Prototyp: HTML, CSS, JavaScript
 - Training und Evaluation: Python, PyTorch, Pillow
 - spätere mobile Laufzeit: ONNX oder Core ML, nach Messungen und Kompatibilitätsprüfung
+
+## Tests
+
+Die modellunabhängigen Tests benötigen nur die Python-Standardbibliothek:
+
+```bash
+python -m unittest discover -s tests -v
+```
+
+GitHub Actions führt diese Tests bei Änderungen an `main` und bei Pull Requests automatisch aus.
 
 ## Web-Prototyp starten
 Die Dateien liegen in `web/`. Für Kamerazugriff im Browser ist üblicherweise HTTPS und eine ausdrückliche Berechtigung nötig. Auf GitHub kann die Oberfläche später mit GitHub Pages veröffentlicht werden.
