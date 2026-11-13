@@ -3,75 +3,44 @@
 ## Leitlinie
 Wir verwenden nur Datensätze, deren Herkunft und Nutzungsbedingungen dokumentiert sind. Öffentlich sichtbare Bilder sind nicht automatisch für Training oder Weitergabe freigegeben.
 
-Für jede Quelle dokumentieren wir:
-- Lizenz und erlaubte Nutzung (Training, Bearbeitung, Weitergabe)
-- Länder- und Regionenabdeckung
-- Klassen und Annotationstypen
-- Aufteilung in Training, Validierung und unabhängigen Test
-
-## Erster deutscher Benchmark: GTSRB
-Die offizielle Benchmark-Seite beschreibt GTSRB als deutschen Klassifikationsdatensatz mit 43 Klassen und mehr als 50.000 Bildern. Sie sagt, dass die Daten frei genutzt werden können und bittet um Zitierung der Originalveröffentlichung. Die dort erwähnte GPLv2-Angabe bezieht sich auf die Ergebnisanalyse-Software, nicht pauschal auf die Bilddaten.
-
-Quellen:
-- Offizielle Datensatzseite: https://benchmark.ini.rub.de/gtsrb_dataset.html
-- Benchmark-Übersicht: https://benchmark.ini.rub.de/about.html
-- Originalarbeit: Stallkamp et al., IJCNN 2011, Seiten 1453–1460.
-
-Für den ersten lokalen Lernversuch ist GTSRB damit ein sinnvoller Kandidat, sofern wir die offiziellen Hinweise und die Herkunft der konkret bezogenen Dateien beibehalten. Vor kommerzieller Nutzung, Weitergabe oder Einbau der Bilder in eine veröffentlichte App müssen die Bedingungen erneut geprüft werden. Der Datensatz deckt nur deutsche Verkehrszeichen ab.
+Für jede Quelle dokumentieren wir Lizenz, zulässige Nutzung, geografische Abdeckung, Klassen und Annotationstypen sowie die Aufteilung in Training, Validierung und Test.
 
 ## Klassifikation und Detektion
-GTSRB enthält bereits zugeschnittene Schilder. Es beantwortet „Was ist dieses Schild?“, aber nicht allein „Wo ist das Schild im gesamten Straßenfoto?“.
+Klassifikation beantwortet: Was ist dieses bereits zugeschnittene Schild? Detektion lokalisiert Schilder in vollständigen Straßenbildern und kann mehrere Schilder pro Bild finden. Das sind getrennte Aufgaben mit unterschiedlichen Daten und Metriken.
 
-Für Detektion gibt es separat GTSDB, einen Benchmark mit natürlichen Vollbildern, in denen die Position von Schildern lokalisiert werden soll. Die offizielle Benchmark-Übersicht beschreibt GTSDB als Detection-Aufgabe. Seine kleine Größe macht ihn zu einem Einstiegspunkt, nicht zu einer ausreichenden globalen Trainingsbasis.
+## Datenquellen und Lizenzprüfung
+GTSRB ist ein deutscher Benchmark für zugeschnittene Verkehrszeichenbilder. GTSDB ist ein separater deutscher Detektionsbenchmark mit natürlichen Straßenbildern. Vor kommerzieller Nutzung oder Weitergabe müssen die Bedingungen der konkret bezogenen Bilddateien geprüft werden.
 
-## Erste Lernstrategie
-Transfer Learning: Ein vortrainiertes Bildmodell wird an unsere Schildklassen angepasst. Das ist üblicherweise effizienter als Training von Grund auf. Die offizielle PyTorch-Anleitung erklärt Fine-Tuning und das Einfrieren vortrainierter Netzwerkschichten:
-https://docs.pytorch.org/tutorials/beginner/transfer_learning_tutorial.html
+Quellen:
+- https://benchmark.ini.rub.de/gtsrb_dataset.html
+- https://benchmark.ini.rub.de/about.html
 
-## Globale Abdeckung
-Nach dem deutschen Prototyp brauchen wir weitere Datensätze mit sauber dokumentierten Nutzungsbedingungen und unterschiedlichen nationalen Verkehrszeichen-Taxonomien. Klassen dürfen nicht allein aufgrund ähnlicher Symbole zusammengelegt werden: Bedeutung und rechtliche Zuordnung können je Land abweichen.
+## Öffentliche synthetische Pilotdaten: Fraunhofer Synset Signset Germany
+- Quelle: https://huggingface.co/datasets/FraunhoferIOSB/Synset-Signset-Germany
+- Auf der Dataset-Seite angegebene Lizenz: CC BY 4.0
+- Veröffentlichter Umfang: 105.500 synthetisch gerenderte Bilder, 211 deutsche Verkehrszeichenklassen
+- Verwendete Konfiguration: Cycles
+- Verfügbare Quell-Splits in dieser Konfiguration: train und validation
+- Aktuelle Pilot-Stichprobe: 80 Train-, 10 Val- und 10 Testbilder je Klasse
+- Val und Test werden disjunkt aus dem Quell-Split validation gezogen. Es gibt in dieser Konfiguration keinen separat veröffentlichten offiziellen Test-Split.
 
-## Lokale Datenprüfung und Evaluation
+**Wichtige Grenzen:** Die Bilder sind synthetisch gerenderte Szenen und keine echten Kameraaufnahmen. Der Testsplit ist eine abgeleitete Teilmenge des Quell-Validation-Splits und kein unabhängiger offizieller Benchmark-Test. Die Daten decken deutsche Zeichen ab, nicht die internationale Taxonomie. Gute Ergebnisse hier belegen keine Erkennung auf realen Straßen.
 
-Vor dem Training die Datenstruktur prüfen:
+## Trainingsverfahren
+Der kostenlose GitHub-Actions-CPU-Pilot verwendet ein vortrainiertes ResNet18. Der finale Residualblock (layer4) und Klassifikationskopf werden feinabgestimmt; frühere Merkmalsextraktionsblöcke bleiben eingefroren. Train-Augmentationen, AdamW, Cosine-Lernratenplan und Early Stopping sind aktiviert. Das beste Modell wird anhand der Validierungsgenauigkeit ausgewählt; der Testsplit bleibt bis zur finalen Evaluation unangetastet.
 
+Lokaler Ablauf:
 ```bash
+python -m training.prepare_synset_dataset --per-class-train 80 --per-class-val 10 --per-class-test 10
 python -m training.audit_dataset --data data/signs
-```
-
-Der Audit prüft fehlende Splits/Klassen, leere Klassen und identische Dateien über mehrere Splits hinweg. Er erkennt keine nahezu identischen Bilder oder zusammengehörigen Videoframes; dafür ist zusätzlich eine szenen- bzw. trackbasierte Trennung nötig.
-
-Nach dem Training ausschließlich den separaten Testsplit auswerten:
-
-```bash
+python -m training.train_classifier --data data/signs --epochs 8 --batch-size 32 --image-size 160 --workers 2 --patience 3
 python -m training.evaluate_classifier --data data/signs/test
 ```
 
-Erzeugt werden `artifacts/evaluation/metrics.json` und `confusion_matrix.csv`. Die Kennzahlen sind Forschungsmetriken, keine Sicherheitsfreigabe.
+Die Auswertung enthält Top-1-, Top-5- und Macro-Top-1-Genauigkeit, Abdeckung der akzeptierten Vorhersagen, Genauigkeit auf akzeptierten Vorhersagen, Konfusionsmatrix und Kennzahlen je Klasse. Modell-Scores sind keine kalibrierten Sicherheitswahrscheinlichkeiten.
 
 ## Keine automatische Web-Bildersammlung
-Wir aktivieren kein wahlloses Scraping. Bilder werden erst nach Lizenzprüfung und sauberer Kennzeichnung aufgenommen.
+Wir aktivieren kein wahlloses Scraping. Weitere echte Bilddaten werden erst nach Prüfung von Lizenz, Herkunft, Annotationen und zulässiger Nutzung aufgenommen. Keine privaten Nutzerbilder ohne ausdrückliche Zustimmung.
 
-## Öffentliche Pilotdaten: Fraunhofer Synset Signset Germany
-
-Für einen reproduzierbaren ersten Trainingslauf ist jetzt ein begrenzter, klassenbalancierter Import vorbereitet:
-- Quelle: https://huggingface.co/datasets/FraunhoferIOSB/Synset-Signset-Germany
-- Angegebene Lizenz auf der Dataset-Seite: CC BY 4.0
-- Umfang der Quelle: 105.500 synthetisch gerenderte Bilder, 211 deutsche Verkehrszeichenklassen
-- Verwendete Konfiguration: Cycles
-- Pilot-Stichprobe: 20 Train-, 5 Val- und 5 Testbilder je Klasse (sofern in allen Quell-Splits vorhanden)
-- Der Testsplit stammt getrennt aus dem veröffentlichten Quell-Testsplit.
-
-Wichtig: Das sind **synthetisch gerenderte Szenen und keine echten Kameraaufnahmen**. Sie eignen sich für einen technischen Pipeline-Pilot, belegen aber keine Erkennungsleistung auf realen Straßenbildern. Die Daten decken deutsche Zeichen ab und bilden keine internationale Taxonomie. Die Dataset-Veröffentlichung warnt ausdrücklich vor sicherheitskritischen Einsätzen ohne zusätzliche Eignungsprüfung.
-
-Vorbereitung lokal:
-
-```bash
-python -m pip install -r requirements.txt
-python -m training.prepare_synset_dataset --per-class-train 20 --per-class-val 5 --per-class-test 5
-python -m training.audit_dataset --data data/signs
-python -m training.train_classifier --data data/signs --epochs 2 --batch-size 32 --image-size 128
-python -m training.evaluate_classifier --data data/signs/test
-```
-
-Ein GitHub-Actions-Workflow führt denselben begrenzten CPU-Pilotlauf aus und veröffentlicht Modell, Kennzahlen und Quellenmanifest als kurzlebiges Artefakt. Die Gewichte werden nicht ins Repository eingecheckt. Ein erfolgreicher Workflow ist erst nach Abschluss und Prüfung seiner Logs bestätigt.
+## Sicherheitsgrenzen
+Schild Pilot ist ein Forschungs- und Lernprototyp. Keine Fahrzeugsteuerung, keine Fahrerassistenzfreigabe und keine Tests während der Fahrt. Für eine spätere reale Anwendung wären unabhängige, geografisch getrennte reale Testdaten, Detektion, robuste Unsicherheitsbehandlung, Kalibrierung und umfangreiche Sicherheitsvalidierung erforderlich.
