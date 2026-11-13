@@ -10,13 +10,13 @@ class DecisionTests(unittest.TestCase):
         self.assertEqual(result["label"], "A")
 
     def test_abstains_when_score_is_low(self):
-        result = decide_prediction([0.55, 0.30, 0.15], ["A", "B", "C"])
+        result = decide_prediction([0.40, 0.35, 0.25], ["A", "B", "C"])
         self.assertEqual(result["status"], "uncertain")
         self.assertIsNone(result["label"])
         self.assertEqual(result["reason"], "score_too_low")
 
     def test_abstains_when_top_classes_are_close(self):
-        result = decide_prediction([0.71, 0.68, 0.01], ["A", "B", "C"])
+        result = decide_prediction([0.46, 0.42, 0.12], ["A", "B", "C"])
         self.assertEqual(result["status"], "uncertain")
         self.assertEqual(result["reason"], "top_classes_too_close")
 
