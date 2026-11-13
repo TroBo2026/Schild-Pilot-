@@ -37,7 +37,7 @@ Die Enthaltungsregel hat 249 von 2.110 Testbildern als unsicher zurückgewiesen.
 
 **Wichtige Einschränkung der Evaluation:** Die Quelle veröffentlicht in der verwendeten Konfiguration keinen offiziellen Test-Split. Validierung und Test wurden als disjunkte Teilmengen aus dem Quell-Split `validation` gezogen. Die Werte sind daher ein reproduzierbarer interner Pilotvergleich, kein unabhängiger Benchmark-Nachweis.
 
-**Phase 2:** Die technische COCO-Datenprüfung für vollständige Straßenbilder ist vorbereitet und wird durch Unit-Tests abgesichert. Ein rechtlich freigegebener realer Detektionsdatensatz fehlt noch; deshalb gibt es noch kein Detektionsmodell.
+**Phase 2:** Die technische COCO-Datenprüfung für vollständige Straßenbilder ist vorbereitet und durch Unit-Tests abgesichert. Als erster Realbild-Kandidat wurde TrafficSigns-Raw (CC BY 4.0, 4.185 Straßenbilder, 8.249 manuell geprüfte Boxen) identifiziert. Lizenzdatei, Prüfsummen und Datenschutz werden vor dem Import nochmals geprüft; ein Detektionsmodell existiert noch nicht.
 
 **Phase 3:** lokale Smartphone-/iPhone-Laufzeit und Offline-Tests; noch offen.
 
