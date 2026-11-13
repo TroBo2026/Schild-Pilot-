@@ -16,12 +16,21 @@ def main():
     p.add_argument("--batch-size",type=int,default=32)
     p.add_argument("--min-score",type=float,default=0.45)
     p.add_argument("--min-margin",type=float,default=0.10)
+    p.add_argument("--thresholds",type=Path,default=None,
+                   help="JSON aus training.calibrate_thresholds; falls nicht angegeben, wird model-dir/calibrated_thresholds.json verwendet.")
     a=p.parse_args()
     if a.batch_size<1: raise SystemExit("--batch-size muss positiv sein.")
     mp=a.model_dir/"metadata.json"; wp=a.model_dir/"best_model.pth"
     if not a.data.is_dir() or not mp.is_file() or not wp.is_file():
         raise SystemExit("Testdaten oder trainiertes Modell/Metadaten fehlen.")
     metadata=json.loads(mp.read_text(encoding="utf-8")); classes=metadata.get("classes")
+    threshold_path=a.thresholds or (a.model_dir/"calibrated_thresholds.json")
+    threshold_source="command_line" if a.thresholds else "model_dir_default"
+    if threshold_path.is_file():
+      thresholds=json.loads(threshold_path.read_text(encoding="utf-8"))
+      a.min_score=float(thresholds["min_score"]); a.min_margin=float(thresholds["min_margin"])
+    else:
+      threshold_source="fixed_cli_defaults"
     if not isinstance(classes,list) or not classes: raise SystemExit("Ungültige Klassenliste.")
     ds=datasets.ImageFolder(a.data,transform=transforms.Compose([
       transforms.Resize((int(metadata.get("image_size",224)),)*2),transforms.ToTensor(),
@@ -57,7 +66,7 @@ def main():
       "macro_top1_accuracy":sum(supported)/len(supported) if supported else None,
       "accepted_predictions":accepted,"abstained_predictions":abstained,
       "coverage":accepted/total,"accuracy_on_accepted":correct_accepted/accepted if accepted else None,
-      "min_score":a.min_score,"min_margin":a.min_margin,
+      "min_score":a.min_score,"min_margin":a.min_margin,"threshold_source":threshold_source,
       "note":"Scores are not calibrated safety probabilities. Research evaluation only."}
     a.output.mkdir(parents=True,exist_ok=True)
     (a.output/"metrics.json").write_text(json.dumps(metrics,indent=2,ensure_ascii=False),encoding="utf-8")
