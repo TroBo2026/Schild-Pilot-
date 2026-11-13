@@ -13,7 +13,7 @@ def decide_prediction(
     scores: Iterable[float],
     class_names: list[str],
     *,
-    min_score: float = 0.65,
+    min_score: float = 0.45,
     min_margin: float = 0.10,
 ) -> dict[str, object]:
     """Return an accepted label or abstain when the result is ambiguous.
