@@ -31,6 +31,7 @@
 **Interpretation:** Das ist ein synthetischer Klassifikationspilot, kein Nachweis für reale Straßenleistung. Der Quell-Datensatz stellt in der verwendeten Konfiguration keinen offiziellen Test-Split bereit. Val und Test sind disjunkt aus dem Quell-Split `validation` gezogen. Die Kennzahlen sind nicht auf reale Kameraaufnahmen oder andere Länder übertragbar.
 
 ## Phase 2 – Detektion in vollständigen Straßenbildern
+- [x] Technisches COCO-Detektionsdaten-Audit mit Bounding-Box-, Referenz-, Klassen- und Exact-Duplicate-Prüfung vorbereiten
 - [ ] Detektionsdatensatz mit Bounding Boxes und klaren Nutzungsrechten auswählen
 - [ ] Detektor getrennt von der Klassifikation evaluieren
 - [ ] Mehrere Schilder pro Foto lokalisieren
