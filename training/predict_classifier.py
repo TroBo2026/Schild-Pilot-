@@ -23,7 +23,7 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("image", type=Path)
     parser.add_argument("--model-dir", type=Path, default=Path("artifacts/sign_classifier"))
-    parser.add_argument("--min-score", type=float, default=0.65)
+    parser.add_argument("--min-score", type=float, default=0.45)
     parser.add_argument("--min-margin", type=float, default=0.10)
     args = parser.parse_args()
 
