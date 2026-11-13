@@ -51,3 +51,27 @@ Erzeugt werden `artifacts/evaluation/metrics.json` und `confusion_matrix.csv`. D
 
 ## Keine automatische Web-Bildersammlung
 Wir aktivieren kein wahlloses Scraping. Bilder werden erst nach Lizenzprüfung und sauberer Kennzeichnung aufgenommen.
+
+## Öffentliche Pilotdaten: Fraunhofer Synset Signset Germany
+
+Für einen reproduzierbaren ersten Trainingslauf ist jetzt ein begrenzter, klassenbalancierter Import vorbereitet:
+- Quelle: https://huggingface.co/datasets/FraunhoferIOSB/Synset-Signset-Germany
+- Angegebene Lizenz auf der Dataset-Seite: CC BY 4.0
+- Umfang der Quelle: 105.500 synthetisch gerenderte Bilder, 211 deutsche Verkehrszeichenklassen
+- Verwendete Konfiguration: Cycles
+- Pilot-Stichprobe: 20 Train-, 5 Val- und 5 Testbilder je Klasse (sofern in allen Quell-Splits vorhanden)
+- Der Testsplit stammt getrennt aus dem veröffentlichten Quell-Testsplit.
+
+Wichtig: Das sind **synthetisch gerenderte Szenen und keine echten Kameraaufnahmen**. Sie eignen sich für einen technischen Pipeline-Pilot, belegen aber keine Erkennungsleistung auf realen Straßenbildern. Die Daten decken deutsche Zeichen ab und bilden keine internationale Taxonomie. Die Dataset-Veröffentlichung warnt ausdrücklich vor sicherheitskritischen Einsätzen ohne zusätzliche Eignungsprüfung.
+
+Vorbereitung lokal:
+
+```bash
+python -m pip install -r requirements.txt
+python -m training.prepare_synset_dataset --per-class-train 20 --per-class-val 5 --per-class-test 5
+python -m training.audit_dataset --data data/signs
+python -m training.train_classifier --data data/signs --epochs 2 --batch-size 32 --image-size 128
+python -m training.evaluate_classifier --data data/signs/test
+```
+
+Ein GitHub-Actions-Workflow führt denselben begrenzten CPU-Pilotlauf aus und veröffentlicht Modell, Kennzahlen und Quellenmanifest als kurzlebiges Artefakt. Die Gewichte werden nicht ins Repository eingecheckt. Ein erfolgreicher Workflow ist erst nach Abschluss und Prüfung seiner Logs bestätigt.
