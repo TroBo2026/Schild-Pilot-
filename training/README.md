@@ -108,3 +108,34 @@ Quellen:
 **Entscheidung:** Für einen begrenzten, nicht sicherheitskritischen Forschungs-Pilot geeignet, vorbehaltlich erneuter Prüfung der mitgelieferten Lizenzdatei, Attribution, Datenschutz-/Bildinhalte und Prüfsummen beim konkreten Download. Die zwei Klassen sind nur eine grobe Schilder-/Zustandsdetektion; sie ersetzen keine 211-Klassen-Schilderklassifikation und bilden keine internationale Taxonomie ab. Der Datensatz ist relativ klein und visuell eher sauber; Ergebnisse müssen entsprechend eingeordnet werden. Vor jeder Produkt- oder GEPARD-Nutzung ist eine gesonderte Rechte- und Datenschutzprüfung erforderlich.
 
 Der Datensatz ist noch nicht ins Repository geladen. Vor dem Import werden nur die TrafficSigns-Raw-Dateien extrahiert, Lizenz und Checksummen geprüft, die gelieferten Train/Val/Test-Gruppen unverändert übernommen und das neue COCO-Audit ausgeführt. Erst nach erfolgreichem Audit wird ein kleiner Detektions-Baseline-Lauf gestartet. Die Testdaten bleiben bis zur finalen Auswertung unangetastet.
+
+
+
+## Verbesserter synthetischer Klassifikationslauf #6 (13.11.2026)
+
+GitHub Actions: https://github.com/TroBo2026/Schild-Pilot-/actions/runs/43483453551
+
+- 211 Klassen; 16.880 Trainings-, 2.110 Validierungs- und 2.110 abgeleitete Testbilder
+- Bestes Validierungsergebnis: 88,34 % (Epoche 8); Trainingsgenauigkeit am Ende: 96,39 %
+- Test Top-1: 87,39 %; Top-5: 96,73 %
+- Auf Validierungsdaten gewählter Betriebspunkt: Mindestscore 0,60, Mindestabstand 0,35; Validierungsabdeckung 80,24 %, Genauigkeit der akzeptierten Vorhersagen 97,05 %
+- Auf dem Testsplit: 1.660 akzeptierte und 450 zurückgewiesene Vorhersagen; Abdeckung 78,67 %; Genauigkeit auf akzeptierten Vorhersagen 97,17 %
+
+Gegenüber Lauf #4 ist Top-1 geringfügig niedriger (87,39 % statt 87,54 %), Top-5 geringfügig höher (96,73 % statt 96,68 %). Die hohe Genauigkeit der akzeptierten Vorhersagen geht mit einer Enthaltung bei 21,33 % der Testbilder einher. Die auf Validierungsdaten angestrebte Mindestabdeckung von 80 % wurde im Test nicht ganz erreicht. Es handelt sich weiterhin um synthetische, zugeschnittene deutsche Schilderbilder; kein realer Straßen-Benchmark und keine Sicherheitsvalidierung.
+
+Hinweis zur Auswertung: Die Schwellenwerte wurden ausschließlich auf dem Val-Split gewählt und aus artifacts/sign_classifier/calibrated_thresholds.json übernommen. threshold_source=model_dir_default bezeichnet den regulären Datei-Ladepfad, nicht die Verwendung der festen CLI-Standardwerte.
+
+## Erster Realbild-Detektionspilot – Aufbau
+
+Der versionierte Datensatz TrafficSigns-Raw 0.2.0 wird getrennt vom 211-Klassen-Klassifikator behandelt. Die spezifische Lizenznotiz im Quelldatensatz weist die TrafficSigns-Raw-Bilder und YOLO-Annotationen als CC BY 4.0 aus und verlangt Attribution zur Publikation, zum Repository-Release und zur DOI-Veröffentlichung. Die Daten sind autoreneigen; Cityscapes-/COCO-Unterdaten werden ausdrücklich nicht mitverwendet.
+
+- 4.185 reale Straßenbilder, 8.249 manuell geprüfte Boxen
+- Offizielle Splits unverändert: Train 3.167 / Val 628 / Test 390
+- Klassen: Traffic Sign und Damaged Traffic Sign
+- Archiv-Prüfsumme wird vor Extraktion geprüft; nur traffic_signs_raw/ und die zugehörige Lizenzdatei werden extrahiert
+- YOLO-Labels werden in COCO-JSON umgewandelt und vor dem Training auditiert
+- Detektor-Baseline: Faster R-CNN MobileNetV3 320, zufällige Initialisierung ohne fremde COCO-Gewichte; Validierung mit Precision/Recall/F1 bei IoU 0,5 und Score 0,25. Das ist eine Diagnosemetrik, kein COCO-mAP.
+
+Workflow: https://github.com/TroBo2026/Schild-Pilot-/actions/workflows/real-image-detector.yml
+
+Der erste Trainingslauf ist gestartet. Der offizielle Testsplit bleibt bis zu einer späteren, separaten finalen Auswertung unberührt. Der Datensatz hat nur zwei grobe Klassen und ist keine internationale Schildertaxonomie. CC BY 4.0 erfordert Attribution; daraus folgt keine pauschale Produkt- oder Sicherheitsfreigabe.
