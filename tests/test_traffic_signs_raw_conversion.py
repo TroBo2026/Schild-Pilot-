@@ -13,9 +13,10 @@ class TrafficSignsRawConversionTests(unittest.TestCase):
         category, _ = yolo_to_coco("1 0.5 0.5 0.2 0.2", 100, 100)
         self.assertEqual(category, 2)
 
-    def test_rejects_out_of_bounds_box(self):
-        with self.assertRaises(ValueError):
-            yolo_to_coco("0 0.02 0.5 0.2 0.2", 100, 100)
+    def test_clips_box_crossing_image_boundary(self):
+        category, bbox = yolo_to_coco("0 0.02 0.5 0.2 0.2", 100, 100)
+        self.assertEqual(category, 1)
+        self.assertEqual(bbox, [0.0, 40.0, 12.0, 20.0])
 
     def test_rejects_unknown_class(self):
         with self.assertRaises(ValueError):
