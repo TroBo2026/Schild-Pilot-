@@ -1,0 +1,15 @@
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.env
+.pytest_cache/
+.DS_Store
+data/
+datasets/
+artifacts/
+checkpoints/
+*.pt
+*.pth
+*.onnx
+*.mlmodel
