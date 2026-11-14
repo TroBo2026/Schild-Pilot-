@@ -1,17 +1,18 @@
 name: Real-image traffic sign detector pilot
+
+# CPU detector training took about 80 minutes and produced no true positives
+# in the first baseline. Keep expensive training manual until the pipeline is
+# corrected and reviewed; normal code pushes run the lightweight unit tests.
 on:
-  push:
-    branches: [main]
-    paths:
-      - "training/prepare_traffic_signs_raw.py"
-      - "training/train_detector.py"
-      - ".github/workflows/real-image-detector.yml"
   workflow_dispatch:
+
 concurrency:
   group: schild-pilot-detector-${{ github.ref }}
   cancel-in-progress: true
+
 permissions:
   contents: read
+
 jobs:
   detector-pilot:
     runs-on: ubuntu-latest
@@ -46,40 +47,44 @@ jobs:
                   raise SystemExit("TrafficSigns-Raw-README oder eindeutige Lizenzdatei fehlt.")
               raw_prefix = raw_readmes[0].rsplit("README.md", 1)[0]
               license_path = license_files[0]
-              root_prefix = raw_prefix.split("traffic_signs_raw/")[0]
               selected = [n for n in names if n.startswith(raw_prefix) or n == license_path]
+              for name in selected:
+                  if name.startswith("/") or ".." in name.split("/"):
+                      raise SystemExit(f"Unsicherer Archivpfad: {name}")
               z.extractall("/tmp/traffic-signs-extracted", selected)
-              print(f"Extrahierter Datensatzpfad: {raw_prefix}")
-              print(f"Lizenzdatei: {license_path}")
               with open("/tmp/traffic-signs-extracted/traffic_signs_license_path.txt", "w") as f:
                   f.write(license_path)
+              print(f"Extrahierter Datensatzpfad: {raw_prefix}")
+              print(f"Lizenzdatei: {license_path}")
           PY
       - name: Verify license and convert original splits to COCO
         run: |
           LICENSE_PATH="$(cat /tmp/traffic-signs-extracted/traffic_signs_license_path.txt)"
-          python -m training.prepare_traffic_signs_raw \
-            --source "/tmp/traffic-signs-extracted/$(python - <<'PY'
+          SOURCE_PATH="$(python - <<'PY'
           import zipfile
           with zipfile.ZipFile("/tmp/traffic-signs-release.zip") as z:
               print(next(n.rsplit("README.md",1)[0] for n in z.namelist() if n.endswith("/traffic_signs_raw/README.md")).rstrip("/"))
           PY
-          )" \
+          )"
+          python -m training.prepare_traffic_signs_raw \
+            --source "/tmp/traffic-signs-extracted/$SOURCE_PATH" \
             --license-file "/tmp/traffic-signs-extracted/$LICENSE_PATH" \
             --output data/detection
           mkdir -p artifacts
           cp "/tmp/traffic-signs-extracted/$LICENSE_PATH" artifacts/traffic_signs_raw_license.txt
       - name: Audit converted dataset
         run: python -m training.audit_detection_dataset --data data/detection --output artifacts/detection_audit.json
-      - name: Train compact detector from random initialization and validate
+      - name: Train compact detector from random initialization and evaluate
         run: python -m training.train_detector --data data/detection --epochs 3 --batch-size 2 --workers 2
-      - name: Upload detector, metrics, license and audit
+      - name: Upload compact evaluation report (not model weights)
+        if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: schild-pilot-real-image-detector
+          name: schild-pilot-real-image-detector-report
           path: |
-            artifacts/sign_detector/
+            artifacts/sign_detector/*.json
             artifacts/detection_audit.json
             artifacts/traffic_signs_raw_intake.json
             artifacts/traffic_signs_raw_license.txt
-          if-no-files-found: error
+          if-no-files-found: warn
           retention-days: 7
