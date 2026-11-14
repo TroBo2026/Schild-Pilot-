@@ -58,3 +58,23 @@ Quellen der Vorprüfung:
 - Mapillary-/Datensatz-Lizenzübersicht als Sekundärquelle: https://zenodo.org/records/23527395
 
 Sekundärquellen ersetzen nicht die Original-Lizenztexte. Vor jeder tatsächlichen Nutzung sind die aktuellen Bedingungen beim jeweiligen Rechteinhaber zu prüfen.
+
+
+## Aktualisierung: TrafficSigns-Raw 0.2.0 – 14.11.2026
+
+Die Quelle wurde nun nicht nur als Kandidat recherchiert, sondern in einem isolierten CI-Runner konkret geprüft. Die offizielle Zenodo-Version 0.2.0 nennt die direkt veröffentlichten TrafficSigns-Raw-Daten als CC BY 4.0 und führt Vasile Marian, Yong-Bin Kang und Alexander Buddery als Urheber auf. DOI: 10.5281/zenodo.22052437. Die beigefügte datensatzspezifische Lizenznotiz bestätigt CC BY 4.0, bezeichnet die Quelle als autoreneigen und verlangt Attribution zur begleitenden Arbeit, zum Repository-Release und zur DOI-Veröffentlichung.
+
+- Offizielle Quelle: https://zenodo.org/records/22052437
+- Release-Repository: https://github.com/Latzi/object-centric-low-data-datasets
+- DOI: https://doi.org/10.5281/zenodo.22052437
+- Version: 0.2.0, veröffentlicht am 22.08.2026
+- Verifizierte Archiv-SHA-256: `e1e162d114cfe14b209ab7614511524b0c558db72935d3e32c096f87150aff86`
+- Umfang: 4.185 Straßenbilder, 8.249 manuell geprüfte Bounding Boxes
+- Erhaltene Quell-Splits: Train 3.167 / Val 628 / Test 390
+- Zwei grobe Kategorien: Traffic Sign und Damaged Traffic Sign
+
+Es wurden nur die TrafficSigns-Raw-Dateien und die zugehörige Lizenznotiz in den temporären CI-Arbeitsbereich extrahiert. Die Bilder und Annotationen wurden nicht ins Git-Repository übernommen. Cityscapes- und MS-COCO-Bilddaten aus demselben Archiv wurden nicht extrahiert oder verwendet.
+
+**Grenzen:** Die Datensatzbeschreibung belegt keine globale geografische Abdeckung. Die zwei Kategorien beschreiben nur den Zustand bzw. das Vorhandensein eines Schildobjekts, nicht die konkrete Verkehrszeichenbedeutung. Der Datensatz kann daher höchstens eine kleine Detektionsstudie tragen, keine globale Verkehrszeichenklassifikation. Die CC-BY-Attribution ist zu erhalten; eine separate Prüfung für eine spätere kommerzielle Fahrzeuganwendung bleibt erforderlich.
+
+**Modellgewichte:** Der erste Detektor wurde absichtlich ohne fremde vortrainierte Gewichte initialisiert. TorchVision weist ausdrücklich darauf hin, dass vortrainierte Gewichte eigene Lizenz- oder Nutzungsbedingungen aus dem Trainingsdatensatz haben können und diese für den konkreten Einsatzzweck geprüft werden müssen. Solange das nicht geklärt ist, werden keine solchen Gewichte eingebunden. Quelle: https://docs.pytorch.org/vision/main/models.html
