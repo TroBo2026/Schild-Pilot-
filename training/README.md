@@ -78,7 +78,7 @@ Die Kalibrierung ist eine Auswahl eines Betriebspunkts auf Validierungsdaten, ke
 
 ## Detektionsdaten: Intake-Audit und Lizenz-Screening
 
-Für vollständige Straßenbilder ist eine getrennte COCO-artige Datenstruktur vorbereitet. `training.audit_detection_dataset` prüft die drei Splits auf fehlende Dateien, ungültige IDs/Referenzen, abweichende Kategorien, fehlerhafte Bildmaße, Bounding Boxes außerhalb des Bildes sowie byte-identische Bilder über Split-Grenzen. Das Audit ist ein technischer Vorabcheck, kein Nachweis für korrekte Labels, Szenen-Unabhängigkeit oder Nutzungsrechte. Die Tests verwenden synthetische Mini-Fixtures; es wurden keine echten Straßendatensätze importiert.
+Für vollständige Straßenbilder ist eine getrennte COCO-artige Datenstruktur vorbereitet. `training.audit_detection_dataset` prüft die drei Splits auf fehlende Dateien, ungültige IDs/Referenzen, abweichende Kategorien, fehlerhafte Bildmaße, Bounding Boxes außerhalb des Bildes sowie byte-identische Bilder über Split-Grenzen. Das Audit ist ein technischer Vorabcheck, kein Nachweis für korrekte Labels, Szenen-Unabhängigkeit oder Nutzungsrechte. Die Unit-Tests verwenden synthetische Mini-Fixtures. Der echte Datensatz wurde erst im separaten CI-Intake vom 14.11.2026 temporär verarbeitet; die Bilder wurden nicht ins Git-Repository übernommen.
 
 ### Kandidatenprüfung (13.11.2026)
 
@@ -107,7 +107,7 @@ Quellen:
 
 **Entscheidung:** Für einen begrenzten, nicht sicherheitskritischen Forschungs-Pilot geeignet, vorbehaltlich erneuter Prüfung der mitgelieferten Lizenzdatei, Attribution, Datenschutz-/Bildinhalte und Prüfsummen beim konkreten Download. Die zwei Klassen sind nur eine grobe Schilder-/Zustandsdetektion; sie ersetzen keine 211-Klassen-Schilderklassifikation und bilden keine internationale Taxonomie ab. Der Datensatz ist relativ klein und visuell eher sauber; Ergebnisse müssen entsprechend eingeordnet werden. Vor jeder Produkt- oder GEPARD-Nutzung ist eine gesonderte Rechte- und Datenschutzprüfung erforderlich.
 
-Der Datensatz ist noch nicht ins Repository geladen. Vor dem Import werden nur die TrafficSigns-Raw-Dateien extrahiert, Lizenz und Checksummen geprüft, die gelieferten Train/Val/Test-Gruppen unverändert übernommen und das neue COCO-Audit ausgeführt. Erst nach erfolgreichem Audit wird ein kleiner Detektions-Baseline-Lauf gestartet. Die Testdaten bleiben bis zur finalen Auswertung unangetastet.
+Planungsstand vor dem CI-Intake: Der Datensatz war noch nicht ins Repository geladen. Diese Planung wurde am 14.11.2026 im isolierten CI-Runner umgesetzt; siehe den nachfolgenden Ergebnisbericht. Der Datensatz bleibt weiterhin außerhalb des Git-Repositories. Die gelieferten Train/Val/Test-Splits wurden unverändert übernommen; der erste Trainingsversuch verwendete Train und Val, der Testsplit blieb unberührt.
 
 
 
