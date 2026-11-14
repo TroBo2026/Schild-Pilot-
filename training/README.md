@@ -125,17 +125,48 @@ Gegenüber Lauf #4 ist Top-1 geringfügig niedriger (87,39 % statt 87,54 %), Top
 
 Hinweis zur Auswertung: Die Schwellenwerte wurden ausschließlich auf dem Val-Split gewählt und aus artifacts/sign_classifier/calibrated_thresholds.json übernommen. threshold_source=model_dir_default bezeichnet den regulären Datei-Ladepfad, nicht die Verwendung der festen CLI-Standardwerte.
 
-## Erster Realbild-Detektionspilot – Aufbau
+## Realbild-Detektionspilot: TrafficSigns-Raw 0.2.0
 
-Der versionierte Datensatz TrafficSigns-Raw 0.2.0 wird getrennt vom 211-Klassen-Klassifikator behandelt. Die spezifische Lizenznotiz im Quelldatensatz weist die TrafficSigns-Raw-Bilder und YOLO-Annotationen als CC BY 4.0 aus und verlangt Attribution zur Publikation, zum Repository-Release und zur DOI-Veröffentlichung. Die Daten sind autoreneigen; Cityscapes-/COCO-Unterdaten werden ausdrücklich nicht mitverwendet.
+Quelle: [Zenodo 22052437](https://zenodo.org/records/22052437), Version 0.2.0, DOI [10.5281/zenodo.22052437](https://doi.org/10.5281/zenodo.22052437). Urheber laut Zenodo: Vasile Marian, Yong-Bin Kang und Alexander Buddery. Die offizielle Datensatzseite und die beigefügte TrafficSigns-spezifische Lizenznotiz nennen CC BY 4.0 für die direkt veröffentlichten TrafficSigns-Raw-Bilder und YOLO-Annotationen. Die Lizenz verlangt Attribution zur begleitenden Arbeit, zum Repository-Release und zur DOI-Veröffentlichung.
 
-- 4.185 reale Straßenbilder, 8.249 manuell geprüfte Boxen
-- Offizielle Splits unverändert: Train 3.167 / Val 628 / Test 390
-- Klassen: Traffic Sign und Damaged Traffic Sign
-- Archiv-Prüfsumme wird vor Extraktion geprüft; nur traffic_signs_raw/ und die zugehörige Lizenzdatei werden extrahiert
-- YOLO-Labels werden in COCO-JSON umgewandelt und vor dem Training auditiert
-- Detektor-Baseline: Faster R-CNN MobileNetV3 320, zufällige Initialisierung ohne fremde COCO-Gewichte; Validierung mit Precision/Recall/F1 bei IoU 0,5 und Score 0,25. Das ist eine Diagnosemetrik, kein COCO-mAP.
+- Archiv-SHA-256, vor Extraktion im CI geprüft: `e1e162d114cfe14b209ab7614511524b0c558db72935d3e32c096f87150aff86`
+- Train: 3.167 Bilder / 6.557 Boxen
+- Val: 628 Bilder / 1.063 Boxen
+- Test: 390 Bilder / 629 Boxen
+- Gesamt: 4.185 Bilder / 8.249 Boxen
+- Klassen: `Traffic Sign`, `Damaged Traffic Sign`
+- Nur `traffic_signs_raw/` und die passende Lizenznotiz wurden extrahiert. Andere Archivbestandteile, insbesondere Cityscapes- und COCO-Daten, wurden nicht verwendet.
+- Die Bilder und Modellgewichte wurden nicht ins Git-Repository übernommen.
 
-Workflow: https://github.com/TroBo2026/Schild-Pilot-/actions/workflows/real-image-detector.yml
+**Geografische Einschränkung:** Die offizielle Datensatzbeschreibung belegt keine globale Abdeckung. Zwei Objekt-/Zustandsklassen sind keine Verkehrszeichen-Taxonomie. Der Datensatz ist ein begrenzter Detektionspilot, keine globale Klassifikationsgrundlage.
 
-Der erste Trainingslauf ist gestartet. Der offizielle Testsplit bleibt bis zu einer späteren, separaten finalen Auswertung unberührt. Der Datensatz hat nur zwei grobe Klassen und ist keine internationale Schildertaxonomie. CC BY 4.0 erfordert Attribution; daraus folgt keine pauschale Produkt- oder Sicherheitsfreigabe.
+### Erster CPU-Trainingslauf
+
+GitHub Actions: https://github.com/TroBo2026/Schild-Pilot-/actions/runs/43492476620
+
+Das technische Daten-Audit war sauber: 0 Fehler, 0 Warnungen und keine byte-identischen Bilder über Train/Val/Test. Der anschließende Faster-R-CNN-MobileNetV3-320-Lauf wurde mit zufälliger Initialisierung und drei CPU-Epochen ausgeführt. Er war prozessseitig erfolgreich, aber fachlich nicht brauchbar:
+
+| Epoche | Train-Loss | TP | FP | FN | Precision | Recall | F1 |
+|---:|---:|---:|---:|---:|---:|---:|---:|
+| 1 | 0,2597 | 0 | 207 | 1.063 | 0 % | 0 % | 0 |
+| 2 | 0,2950 | 0 | 526 | 1.063 | 0 % | 0 % | 0 |
+| 3 | 0,3529 | 0 | 622 | 1.063 | 0 % | 0 % | 0 |
+
+Die alte Auswertung nutzte nur IoU 0,5 und Score 0,25. Der steigende False-Positive-Zähler und die fehlenden Treffer zeigen, dass der Lauf keine brauchbare Detektions-Baseline geliefert hat. Der offizielle Testsplit wurde in diesem Lauf nicht ausgewertet. Der frühere Workflow meldete trotzdem `success`, weil er nur den Prozessabschluss prüfte; das war kein Qualitätsnachweis.
+
+### Korrektur im aktuellen Code
+
+- `training/detection_metrics.py`: neue dependency-freie IoU-, 1:1-Matching- und Score-Schwellen-Sweep-Logik.
+- `training/train_detector.py`: Vorhersagen werden einmal gesammelt; die Score-Schwelle wird ausschließlich auf Val anhand F1 ausgewählt. Der Testsplit wird nur nach mindestens einem echten Val-Treffer ausgewertet und verwendet unverändert die Val-Schwelle.
+- Ein Lauf mit 0 True Positives auf Val oder Test wird als fehlgeschlagen beendet. Testdaten werden bei Null-TP auf Val nicht geöffnet.
+- `.github/workflows/real-image-detector.yml`: der lange CPU-Lauf ist bis zur nächsten Prüfung nur manuell startbar. Berichtsartefakte enthalten JSON-Metriken und Lizenz-/Auditnachweise, keine Modellgewichte.
+
+Es wurde in dieser Entwicklungsrunde kein neues Modelltraining gestartet. Die Ursache für den Null-TP-Lauf ist noch nicht abschließend geklärt. Vor einem weiteren langen CPU-Lauf müssen die neuen Metriktests und der Code-Review erfolgreich sein. Vortrainierte TorchVision-Gewichte werden nicht eingesetzt, solange ihre konkreten, gegebenenfalls aus den Trainingsdaten abgeleiteten Nutzungsbedingungen nicht für den Einsatzzweck geklärt sind.
+
+## Keine automatische Web-Bildersammlung
+
+Wir aktivieren kein wahlloses Scraping. Weitere echte Bilddaten werden erst nach Prüfung von Lizenz, Herkunft, Annotationen und zulässiger Nutzung aufgenommen. Keine privaten Nutzerbilder ohne ausdrückliche Zustimmung.
+
+## Sicherheitsgrenzen
+
+Schild Pilot ist ein Forschungs- und Lernprototyp. Keine Fahrzeugsteuerung, keine Fahrerassistenzfreigabe und keine Tests während der Fahrt. Für eine spätere reale Anwendung wären unabhängige, geografisch getrennte reale Testdaten, Detektion, robuste Unsicherheitsbehandlung, Kalibrierung und umfangreiche Sicherheitsvalidierung erforderlich.
