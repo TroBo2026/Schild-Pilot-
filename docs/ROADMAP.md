@@ -33,13 +33,25 @@
 ## Phase 2 – Detektion in vollständigen Straßenbildern
 - [x] Technisches COCO-Detektionsdaten-Audit mit Bounding-Box-, Referenz-, Klassen- und Exact-Duplicate-Prüfung vorbereiten
 - [x] Kleinen Realbild-Kandidaten TrafficSigns-Raw (CC BY 4.0, 4.185 Bilder, 8.249 geprüfte Boxen) identifizieren und Lizenz-/Provenienzprüfung dokumentieren
-- [ ] TrafficSigns-Raw-Archiv, Lizenzdatei und Prüfsummen vor Import unabhängig verifizieren
+- [x] TrafficSigns-Raw-Archiv, Lizenzdatei und SHA-256-Prüfsumme im isolierten CI-Runner verifizieren
 - [x] Datensatz-Intake, YOLO-zu-COCO-Konvertierung und technisches Audit im Detektor-Workflow implementieren
-- [ ] Erste Detektions-Baseline getrennt vom Klassifikator trainieren und bewerten (Workflow läuft)
+- [x] Ersten CPU-Detektionsversuch ausführen und Kennzahlen dokumentieren (0 True Positives; kein brauchbares Modell)
+- [x] Score-Schwellen-Sweep ausschließlich auf Validierungsdaten implementieren
+- [x] Testsplit nur nach positiver Validierung freigeben; Null-TP-Ergebnisse als fehlgeschlagen markieren
+- [ ] Funktionierende Detektions-Baseline mit positiver Val- und Testleistung nachweisen
 - [ ] Detektor getrennt von der Klassifikation evaluieren
 - [ ] Mehrere Schilder pro Foto lokalisieren
 - [ ] Kleine, verdeckte, teilweise sichtbare und unbekannte Schilder berücksichtigen
 - [ ] Unsichere oder nicht unterstützte Klassen explizit kennzeichnen
+
+### Realbild-Detektionsversuch vom 13./14.11.2026
+
+- Datensatz: TrafficSigns-Raw 0.2.0, CC BY 4.0, DOI 10.5281/zenodo.22052437
+- Train 3.167 Bilder / 6.557 Boxen; Val 628 / 1.063; Test 390 / 629
+- Audit: 0 Fehler, 0 Warnungen, 0 exakte Duplikate über Splits
+- Erster Lauf #43492476620: 3 Epochen, zufällige Initialisierung, Score 0,25 / IoU 0,5; Val jeweils 0 TP, F1 0, steigender FP-Zähler 207 → 526 → 622
+- Der Lauf hat den Testsplit nicht ausgewertet. Ein erfolgreicher Workflow-Status bedeutete nur, dass der Prozess ohne Fehler beendet wurde, nicht dass der Detektor brauchbar war.
+- CPU-Training ist bis zur Korrektur manuell; Berichtsartefakte enthalten keine Modellgewichte.
 
 ## Phase 3 – Smartphone und Offline-Fähigkeit
 - [ ] Modell für eine lokale Browser- oder iOS-Laufzeit exportieren
