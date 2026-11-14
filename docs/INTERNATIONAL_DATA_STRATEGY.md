@@ -35,7 +35,7 @@ Berichte müssen Ergebnisse nach Land/Region, Klasse, Tageszeit, Wetter und Bild
 - MTSD-Publikation: https://www.ecva.net/papers/eccv_2020/papers_ECCV/html/4217_ECCV_2020_paper.php
 
 
-## Öffentliche Datensatz-Kandidaten – Recherche-Stand 13.11.2026
+## Öffentliche Datensatz-Kandidaten – historischer Recherche-Stand 13.11.2026
 
 Diese Prüfung ist eine Vorauswahl, keine Freigabe zum Download, Training oder kommerziellen Einsatz:
 
@@ -49,7 +49,7 @@ Diese Prüfung ist eine Vorauswahl, keine Freigabe zum Download, Training oder k
 
 Für TT100K nennt die Dokumentation 6.105 Trainings-, 7.641 Validierungs- und 3.071 Testbilder, jedoch auch einen Downloadumfang von ungefähr 18 GB. Das ist für den aktuellen kostenlosen CPU-Pilot unnötig groß und wegen der nicht-kommerziellen Lizenz keine passende Grundlage für eine spätere kommerzielle Fahrzeuganwendung.
 
-GTSRB/GTSDB und Mapillary bleiben bis zur Prüfung der jeweiligen Originalbedingungen gesperrt. Es wurden in dieser Recherche keine Bilddateien heruntergeladen, keine Nutzerfotos verwendet und keine Datensätze ins Repository aufgenommen.
+Diese Aussage beschreibt den damaligen Recherche-Stand vom 13.11.2026. Die Ergänzung vom 14.11.2026 dokumentiert den späteren, getrennten CI-Intake von TrafficSigns-Raw 0.2.0. GTSRB/GTSDB und Mapillary bleiben bis zur Prüfung ihrer jeweiligen Originalbedingungen gesperrt. Nutzerfotos wurden nicht verwendet; kein Datensatz wurde ins Git-Repository aufgenommen.
 
 Quellen der Vorprüfung:
 - GTSRB/GTSDB Projektseite: https://github.com/houbensebastian/GermanTrafficSignBenchmarks
