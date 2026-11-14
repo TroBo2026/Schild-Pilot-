@@ -13,6 +13,11 @@ from torchvision.models.detection import fasterrcnn_mobilenet_v3_large_320_fpn
 from torchvision.models.detection.faster_rcnn import FastRCNNPredictor
 from torchvision.transforms.functional import to_tensor
 
+from training.detection_metrics import evaluate_thresholds
+
+
+DEFAULT_SCORE_THRESHOLDS = (0.01, 0.025, 0.05, 0.10, 0.25, 0.50)
+
 
 class CocoDetectionDataset(Dataset):
     def __init__(self, root: Path, split: str):
@@ -51,50 +56,35 @@ def collate(batch):
     return tuple(zip(*batch))
 
 
-def evaluate(model, loader, device, iou_threshold=0.5, score_threshold=0.25):
-    """Greedy per-image matching; reports diagnostic precision/recall, not COCO mAP."""
-    tp = fp = fn = 0
+def evaluate(model, loader, device, score_thresholds=DEFAULT_SCORE_THRESHOLDS,
+             iou_threshold=0.5):
+    """Collect predictions once, then sweep score thresholds on this split."""
+    predictions_by_image = []
+    ground_truths_by_image = []
     model.eval()
     with torch.inference_mode():
         for images, targets in loader:
             outputs = model([image.to(device) for image in images])
             for output, target in zip(outputs, targets):
-                keep = output["scores"].cpu() >= score_threshold
-                boxes = output["boxes"].cpu()[keep]
-                labels = output["labels"].cpu()[keep]
-                gt_boxes, gt_labels = target["boxes"], target["labels"]
-                matched = set()
-                order = torch.argsort(output["scores"].cpu()[keep], descending=True).tolist()
-                for pred_index in order:
-                    candidates = [i for i in range(len(gt_boxes))
-                                  if i not in matched and int(gt_labels[i]) == int(labels[pred_index])]
-                    if not candidates:
-                        fp += 1
-                        continue
-                    pred = boxes[pred_index]
-                    best_i, best_iou = None, 0.0
-                    for i in candidates:
-                        gt = gt_boxes[i]
-                        left, top = torch.maximum(pred[:2], gt[:2])
-                        right, bottom = torch.minimum(pred[2:], gt[2:])
-                        inter = (right - left).clamp(min=0).prod().item()
-                        area_p = (pred[2:] - pred[:2]).clamp(min=0).prod().item()
-                        area_g = (gt[2:] - gt[:2]).clamp(min=0).prod().item()
-                        iou = inter / max(area_p + area_g - inter, 1e-9)
-                        if iou > best_iou:
-                            best_i, best_iou = i, iou
-                    if best_i is not None and best_iou >= iou_threshold:
-                        matched.add(best_i)
-                        tp += 1
-                    else:
-                        fp += 1
-                fn += len(gt_boxes) - len(matched)
-    precision = tp / max(tp + fp, 1)
-    recall = tp / max(tp + fn, 1)
-    return {"iou_threshold": iou_threshold, "score_threshold": score_threshold,
-            "true_positives": tp, "false_positives": fp, "false_negatives": fn,
-            "precision": precision, "recall": recall,
-            "f1": 2 * precision * recall / max(precision + recall, 1e-12)}
+                boxes = output["boxes"].detach().cpu().tolist()
+                labels = output["labels"].detach().cpu().tolist()
+                scores = output["scores"].detach().cpu().tolist()
+                predictions_by_image.append([
+                    {"box": box, "label": int(label), "score": float(score)}
+                    for box, label, score in zip(boxes, labels, scores)
+                ])
+                gt_boxes = target["boxes"].detach().cpu().tolist()
+                gt_labels = target["labels"].detach().cpu().tolist()
+                ground_truths_by_image.append([
+                    {"box": box, "label": int(label)}
+                    for box, label in zip(gt_boxes, gt_labels)
+                ])
+    return evaluate_thresholds(
+        predictions_by_image,
+        ground_truths_by_image,
+        score_thresholds=score_thresholds,
+        iou_threshold=iou_threshold,
+    )
 
 
 def main():
@@ -106,8 +96,8 @@ def main():
     parser.add_argument("--workers", type=int, default=2)
     parser.add_argument("--seed", type=int, default=20261113)
     args = parser.parse_args()
-    if min(args.epochs, args.batch_size) < 1:
-        raise SystemExit("Epochen und Batchgröße müssen positiv sein.")
+    if min(args.epochs, args.batch_size) < 1 or args.workers < 0:
+        raise SystemExit("Epochen und Batchgröße müssen positiv sein; Worker dürfen nicht negativ sein.")
     random.seed(args.seed)
     torch.manual_seed(args.seed)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -126,7 +116,11 @@ def main():
     optimizer = torch.optim.SGD([p for p in model.parameters() if p.requires_grad],
                                 lr=0.002, momentum=0.9, weight_decay=0.0005)
     args.output.mkdir(parents=True, exist_ok=True)
-    history, best_f1 = [], -1.0
+    history = []
+    best_f1 = -1.0
+    best_row = None
+    checkpoint_path = args.output / "best_detector.pth"
+
     for epoch in range(args.epochs):
         model.train()
         running, steps = 0.0, 0
@@ -143,27 +137,98 @@ def main():
             optimizer.step()
             running += float(loss.detach())
             steps += 1
-        metrics = evaluate(model, val_loader, device)
-        row = {"epoch": epoch + 1, "mean_train_loss": running / max(steps, 1), **metrics}
+
+        sweep = evaluate(model, val_loader, device)
+        selected = sweep["best"]
+        row = {
+            "epoch": epoch + 1,
+            "mean_train_loss": running / max(steps, 1),
+            **selected,
+            "threshold_sweep": sweep["thresholds"],
+        }
         history.append(row)
         print(json.dumps(row, ensure_ascii=False), flush=True)
-        if metrics["f1"] > best_f1:
-            best_f1 = metrics["f1"]
-            torch.save(model.state_dict(), args.output / "best_detector.pth")
+
+        if selected["f1"] > best_f1:
+            best_f1 = selected["f1"]
+            best_row = row
             (args.output / "best_validation_metrics.json").write_text(
                 json.dumps(row, indent=2, ensure_ascii=False), encoding="utf-8")
+            if best_f1 > 0.0:
+                torch.save(model.state_dict(), checkpoint_path)
+
+    (args.output / "history.json").write_text(
+        json.dumps(history, indent=2, ensure_ascii=False), encoding="utf-8")
+
     metadata = {
         "architecture": "fasterrcnn_mobilenet_v3_large_320_fpn",
         "classes": ["background", "Traffic Sign", "Damaged Traffic Sign"],
-        "epochs": args.epochs, "best_validation_f1": best_f1,
-        "training_images": len(train_ds), "validation_images": len(val_ds),
-        "pretrained_initialization": "random initialization; no external detection dataset weights",
-        "evaluation": "greedy IoU>=0.5 precision/recall at score>=0.25; not COCO mAP",
-        "limitations": ["Two-class dataset only", "Small pilot dataset",
-                        "No independent external benchmark", "Not safety validated"]
+        "epochs": args.epochs,
+        "training_images": len(train_ds),
+        "validation_images": len(val_ds),
+        "pretrained_initialization": "random initialization; no external model weights",
+        "validation_threshold_selection": (
+            "score threshold selected by maximum validation F1 from "
+            f"{list(DEFAULT_SCORE_THRESHOLDS)} at IoU >= 0.5"
+        ),
+        "evaluation": "greedy per-image IoU matching; diagnostic precision/recall, not COCO mAP",
+        "limitations": [
+            "Two-class dataset only",
+            "Small pilot dataset",
+            "No independent external benchmark",
+            "Not safety validated",
+        ],
     }
-    (args.output / "metadata.json").write_text(json.dumps(metadata, indent=2), encoding="utf-8")
-    (args.output / "history.json").write_text(json.dumps(history, indent=2), encoding="utf-8")
+
+    if best_row is None or best_f1 <= 0.0 or not checkpoint_path.is_file():
+        metadata.update({
+            "status": "failed_no_positive_validation_f1",
+            "best_validation_f1": max(best_f1, 0.0),
+            "test_evaluation": "not run because validation produced no true positives",
+        })
+        (args.output / "metadata.json").write_text(
+            json.dumps(metadata, indent=2, ensure_ascii=False), encoding="utf-8")
+        raise SystemExit(
+            "Keine echte positive Detektion auf dem Validierungssplit; "
+            "Testsplit bleibt unangetastet. Kein nutzbarer Detektor erzeugt."
+        )
+
+    # Only after a positive validation result is the separate test split opened.
+    test_ds = CocoDetectionDataset(args.data, "test")
+    if not len(test_ds):
+        raise SystemExit("Test-Datensatz ist leer.")
+    test_loader = DataLoader(test_ds, batch_size=args.batch_size, shuffle=False,
+                             num_workers=args.workers, collate_fn=collate)
+    model.load_state_dict(torch.load(checkpoint_path, map_location=device, weights_only=True))
+    test_sweep = evaluate(
+        model, test_loader, device,
+        score_thresholds=[float(best_row["score_threshold"])],
+    )
+    test_metrics = {
+        **test_sweep["best"],
+        "threshold_source": "validation_split",
+        "validation_score_threshold": float(best_row["score_threshold"]),
+    }
+    (args.output / "test_metrics.json").write_text(
+        json.dumps(test_metrics, indent=2, ensure_ascii=False), encoding="utf-8")
+    metadata.update({
+        "status": "completed" if test_metrics["true_positives"] > 0 else "failed_no_test_true_positives",
+        "best_validation_f1": best_f1,
+        "best_validation_score_threshold": float(best_row["score_threshold"]),
+        "test_images": len(test_ds),
+        "test_metrics_file": "test_metrics.json",
+        "test_f1": test_metrics["f1"],
+        "test_threshold_source": "validation_split",
+    })
+    (args.output / "metadata.json").write_text(
+        json.dumps(metadata, indent=2, ensure_ascii=False), encoding="utf-8")
+    print(json.dumps({"test_metrics": test_metrics, "status": metadata["status"]},
+                     ensure_ascii=False), flush=True)
+    if test_metrics["true_positives"] == 0:
+        raise SystemExit(
+            "Validierung war positiv, aber auf dem unangetasteten Testsplit "
+            "wurde keine echte Detektion gefunden."
+        )
 
 
 if __name__ == "__main__":
