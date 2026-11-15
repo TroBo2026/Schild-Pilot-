@@ -17,6 +17,13 @@ def _box_xyxy(value: object) -> tuple[float, float, float, float]:
     return x1, y1, x2, y2
 
 
+def _class_id(value: object) -> int:
+    """Accept only integer class IDs; never silently truncate a bad label."""
+    if isinstance(value, bool) or not isinstance(value, int):
+        raise ValueError("Klassen-IDs müssen ganze Zahlen sein.")
+    return value
+
+
 def box_iou(box_a: object, box_b: object) -> float:
     """Intersection over Union for two [x1, y1, x2, y2] boxes."""
     ax1, ay1, ax2, ay2 = _box_xyxy(box_a)
@@ -40,12 +47,15 @@ def _image_counts(
     for prediction in predictions:
         if not isinstance(prediction, dict):
             raise ValueError("Jede Vorhersage muss ein Objekt sein.")
-        score = float(prediction["score"])
+        raw_score = prediction["score"]
+        if isinstance(raw_score, bool) or not isinstance(raw_score, (int, float)):
+            raise ValueError("Vorhersagescores müssen Zahlen sein.")
+        score = float(raw_score)
         if not math.isfinite(score) or not 0.0 <= score <= 1.0:
             raise ValueError("Vorhersagescores müssen endlich und zwischen 0 und 1 liegen.")
         prepared_predictions.append({
             "box": _box_xyxy(prediction["box"]),
-            "label": int(prediction["label"]),
+            "label": _class_id(prediction["label"]),
             "score": score,
         })
 
@@ -55,7 +65,7 @@ def _image_counts(
             raise ValueError("Jede Ground-Truth-Annotation muss ein Objekt sein.")
         prepared_truth.append({
             "box": _box_xyxy(truth["box"]),
-            "label": int(truth["label"]),
+            "label": _class_id(truth["label"]),
         })
 
     candidates = [
@@ -95,14 +105,22 @@ def evaluate_thresholds(
 ) -> dict:
     """Sweep score thresholds; choose an operating point on validation data.
 
-    This is a compact diagnostic, not COCO mAP. Callers must only use the
-    selected threshold on a separate test split after selecting it on val.
+    This is a compact diagnostic, not COCO mAP. IoU must be in (0, 1].
+    Callers must only use the selected threshold on a separate test split
+    after selecting it on validation data.
     """
     if len(predictions_by_image) != len(ground_truths_by_image):
         raise ValueError("Vorhersagen und Ground Truth müssen gleich viele Bilder enthalten.")
-    if not math.isfinite(float(iou_threshold)) or not 0.0 <= float(iou_threshold) <= 1.0:
-        raise ValueError("IoU-Schwelle muss zwischen 0 und 1 liegen.")
-    thresholds = [float(value) for value in score_thresholds]
+    if isinstance(iou_threshold, bool) or not isinstance(iou_threshold, (int, float)):
+        raise ValueError("IoU-Schwelle muss eine Zahl sein.")
+    iou_threshold = float(iou_threshold)
+    if not math.isfinite(iou_threshold) or not 0.0 < iou_threshold <= 1.0:
+        raise ValueError("IoU-Schwelle muss größer als 0 und höchstens 1 sein.")
+    thresholds = []
+    for value in score_thresholds:
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            raise ValueError("Score-Schwellen müssen Zahlen sein.")
+        thresholds.append(float(value))
     if not thresholds:
         raise ValueError("Mindestens eine Score-Schwelle ist erforderlich.")
     if any(not math.isfinite(value) or not 0.0 <= value <= 1.0 for value in thresholds):
@@ -115,7 +133,7 @@ def evaluate_thresholds(
             image_tp, image_fp, image_fn = _image_counts(
                 predictions, ground_truth,
                 score_threshold=threshold,
-                iou_threshold=float(iou_threshold),
+                iou_threshold=iou_threshold,
             )
             tp += image_tp
             fp += image_fp
@@ -125,7 +143,7 @@ def evaluate_thresholds(
         f1 = 2 * precision * recall / (precision + recall) if precision + recall else 0.0
         results.append({
             "score_threshold": threshold,
-            "iou_threshold": float(iou_threshold),
+            "iou_threshold": iou_threshold,
             "images_evaluated": len(predictions_by_image),
             "true_positives": tp,
             "false_positives": fp,

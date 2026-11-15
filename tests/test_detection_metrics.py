@@ -67,6 +67,30 @@ class DetectionMetricsTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             evaluate_thresholds([[]], [[]], score_thresholds=[])
 
+    def test_rejects_zero_or_invalid_iou_threshold(self):
+        for threshold in (0.0, -0.1, 1.01, float("nan"), True):
+            with self.subTest(threshold=threshold):
+                with self.assertRaises(ValueError):
+                    evaluate_thresholds([[]], [[]], iou_threshold=threshold)
+
+    def test_rejects_fractional_and_boolean_class_ids(self):
+        invalid_ids = (1.5, True, "1")
+        for label in invalid_ids:
+            with self.subTest(label=label):
+                with self.assertRaises(ValueError):
+                    evaluate_thresholds(
+                        [[{"box": [0, 0, 10, 10], "label": label, "score": 0.9}]],
+                        [[{"box": [0, 0, 10, 10], "label": 1}]],
+                        score_thresholds=[0.5],
+                    )
+
+    def test_rejects_boolean_scores(self):
+        with self.assertRaises(ValueError):
+            evaluate_thresholds(
+                [[{"box": [0, 0, 10, 10], "label": 1, "score": True}]],
+                [[{"box": [0, 0, 10, 10], "label": 1}]],
+            )
+
 
 if __name__ == "__main__":
     unittest.main()
