@@ -55,3 +55,16 @@ Der Workflow war prozessseitig erfolgreich, das Modell fachlich nicht. Das früh
 Zuerst Metrik- und Konvertierungstests ausführen und die Boxen anhand weniger, lizenzierter Beispielbilder visuell prüfen. Erst danach einen bewusst begrenzten manuellen Trainingslauf starten. Keine Testdaten zur Schwellenwert- oder Modellwahl verwenden.
 
 Schild Pilot bleibt ein Lern- und Forschungsprototyp, keine Fahrassistenz. Keine Fahrzeugsteuerung; keine Nutzerbilder ohne ausdrückliche Zustimmung hochladen.
+
+
+## Folgeprüfung und Metrik-Härtung vom 16.11.2026
+
+Nach Prüfung des aktuellen `main`-Stands wurden die Eingabegrenzen der Detektionsmetriken weiter verschärft:
+
+- Box-Koordinaten, Scores und Schwellenwerte akzeptieren nur echte numerische Werte; boolesche Werte, numerische Zeichenketten, fehlende Werte und nicht-endliche Zahlen werden abgewiesen.
+- Klassen-IDs müssen nicht-negative ganze Zahlen sein; Dezimalwerte, Zeichenketten, boolesche und negative IDs werden nicht stillschweigend umgewandelt.
+- Die vorhandene IoU-Grenze bleibt strikt im Bereich `(0, 1]`.
+
+Dafür wurden `training/detection_metrics.py` und `tests/test_detection_metrics.py` geändert. GitHub Actions Run 70 auf `main` (Commit `fd41389334005d2af590a80a72bd7756864d8228`) führte die Python-Kompilierungsprüfung und **36 Unit-Tests erfolgreich** aus: https://github.com/TroBo2026/Schild-Pilot-/actions/runs/43928494962
+
+In diesem Lauf wurde kein Datensatz heruntergeladen, kein Modell trainiert und kein Modellgewicht hochgeladen. Die Metrik bleibt ein diagnostisches greedy 1:1-IoU-Verfahren und ist kein COCO-mAP-Ersatz. Die reale Detektionsleistung ist weiterhin nicht nachgewiesen; vor einem neuen Training müssen Box-Skalierung, Klassenmapping und Annotationen anhand lizenzierter Beispiele geprüft werden.
