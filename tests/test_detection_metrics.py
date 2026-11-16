@@ -67,14 +67,20 @@ class DetectionMetricsTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             evaluate_thresholds([[]], [[]], score_thresholds=[])
 
+    def test_rejects_non_numeric_box_coordinates(self):
+        for coordinate in (True, "1", None, float("inf")):
+            with self.subTest(coordinate=coordinate):
+                with self.assertRaises(ValueError):
+                    box_iou([0, 0, coordinate, 1], [0, 0, 1, 1])
+
     def test_rejects_zero_or_invalid_iou_threshold(self):
-        for threshold in (0.0, -0.1, 1.01, float("nan"), True):
+        for threshold in (0.0, -0.1, 1.01, float("nan"), True, "0.5"):
             with self.subTest(threshold=threshold):
                 with self.assertRaises(ValueError):
                     evaluate_thresholds([[]], [[]], iou_threshold=threshold)
 
-    def test_rejects_fractional_and_boolean_class_ids(self):
-        invalid_ids = (1.5, True, "1")
+    def test_rejects_fractional_boolean_and_negative_class_ids(self):
+        invalid_ids = (1.5, True, "1", -1)
         for label in invalid_ids:
             with self.subTest(label=label):
                 with self.assertRaises(ValueError):
@@ -83,13 +89,27 @@ class DetectionMetricsTests(unittest.TestCase):
                         [[{"box": [0, 0, 10, 10], "label": 1}]],
                         score_thresholds=[0.5],
                     )
+                with self.assertRaises(ValueError):
+                    evaluate_thresholds(
+                        [[{"box": [0, 0, 10, 10], "label": 1, "score": 0.9}]],
+                        [[{"box": [0, 0, 10, 10], "label": label}]],
+                        score_thresholds=[0.5],
+                    )
 
-    def test_rejects_boolean_scores(self):
-        with self.assertRaises(ValueError):
-            evaluate_thresholds(
-                [[{"box": [0, 0, 10, 10], "label": 1, "score": True}]],
-                [[{"box": [0, 0, 10, 10], "label": 1}]],
-            )
+    def test_rejects_boolean_and_string_scores(self):
+        for score in (True, "0.9"):
+            with self.subTest(score=score):
+                with self.assertRaises(ValueError):
+                    evaluate_thresholds(
+                        [[{"box": [0, 0, 10, 10], "label": 1, "score": score}]],
+                        [[{"box": [0, 0, 10, 10], "label": 1}]],
+                    )
+
+    def test_rejects_non_numeric_score_thresholds(self):
+        for threshold in (True, "0.5", None):
+            with self.subTest(threshold=threshold):
+                with self.assertRaises(ValueError):
+                    evaluate_thresholds([[]], [[]], score_thresholds=[threshold])
 
 
 if __name__ == "__main__":
