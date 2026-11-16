@@ -5,22 +5,31 @@ import math
 from typing import Sequence
 
 
+def _finite_number(value: object, field: str) -> float:
+    """Accept real JSON-style numbers, but never bools or numeric strings."""
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        raise ValueError(f"{field} muss eine Zahl sein.")
+    number = float(value)
+    if not math.isfinite(number):
+        raise ValueError(f"{field} muss endlich sein.")
+    return number
+
+
 def _box_xyxy(value: object) -> tuple[float, float, float, float]:
     if not isinstance(value, (list, tuple)) or len(value) != 4:
         raise ValueError("Box muss vier xyxy-Koordinaten enthalten.")
-    coords = tuple(float(item) for item in value)
-    if not all(math.isfinite(item) for item in coords):
-        raise ValueError("Box-Koordinaten müssen endlich sein.")
-    x1, y1, x2, y2 = coords
+    x1, y1, x2, y2 = (
+        _finite_number(item, "Box-Koordinaten") for item in value
+    )
     if x2 <= x1 or y2 <= y1:
         raise ValueError("Box muss eine positive Fläche haben.")
     return x1, y1, x2, y2
 
 
 def _class_id(value: object) -> int:
-    """Accept only integer class IDs; never silently truncate a bad label."""
-    if isinstance(value, bool) or not isinstance(value, int):
-        raise ValueError("Klassen-IDs müssen ganze Zahlen sein.")
+    """Accept only non-negative integer class IDs; never silently truncate."""
+    if isinstance(value, bool) or not isinstance(value, int) or value < 0:
+        raise ValueError("Klassen-IDs müssen nicht-negative ganze Zahlen sein.")
     return value
 
 
@@ -47,12 +56,9 @@ def _image_counts(
     for prediction in predictions:
         if not isinstance(prediction, dict):
             raise ValueError("Jede Vorhersage muss ein Objekt sein.")
-        raw_score = prediction["score"]
-        if isinstance(raw_score, bool) or not isinstance(raw_score, (int, float)):
-            raise ValueError("Vorhersagescores müssen Zahlen sein.")
-        score = float(raw_score)
-        if not math.isfinite(score) or not 0.0 <= score <= 1.0:
-            raise ValueError("Vorhersagescores müssen endlich und zwischen 0 und 1 liegen.")
+        score = _finite_number(prediction["score"], "Vorhersagescore")
+        if not 0.0 <= score <= 1.0:
+            raise ValueError("Vorhersagescores müssen zwischen 0 und 1 liegen.")
         prepared_predictions.append({
             "box": _box_xyxy(prediction["box"]),
             "label": _class_id(prediction["label"]),
@@ -111,20 +117,16 @@ def evaluate_thresholds(
     """
     if len(predictions_by_image) != len(ground_truths_by_image):
         raise ValueError("Vorhersagen und Ground Truth müssen gleich viele Bilder enthalten.")
-    if isinstance(iou_threshold, bool) or not isinstance(iou_threshold, (int, float)):
-        raise ValueError("IoU-Schwelle muss eine Zahl sein.")
-    iou_threshold = float(iou_threshold)
-    if not math.isfinite(iou_threshold) or not 0.0 < iou_threshold <= 1.0:
+    iou_threshold = _finite_number(iou_threshold, "IoU-Schwelle")
+    if not 0.0 < iou_threshold <= 1.0:
         raise ValueError("IoU-Schwelle muss größer als 0 und höchstens 1 sein.")
-    thresholds = []
-    for value in score_thresholds:
-        if isinstance(value, bool) or not isinstance(value, (int, float)):
-            raise ValueError("Score-Schwellen müssen Zahlen sein.")
-        thresholds.append(float(value))
+    thresholds = [
+        _finite_number(value, "Score-Schwelle") for value in score_thresholds
+    ]
     if not thresholds:
         raise ValueError("Mindestens eine Score-Schwelle ist erforderlich.")
-    if any(not math.isfinite(value) or not 0.0 <= value <= 1.0 for value in thresholds):
-        raise ValueError("Score-Schwellen müssen endlich und zwischen 0 und 1 liegen.")
+    if any(not 0.0 <= value <= 1.0 for value in thresholds):
+        raise ValueError("Score-Schwellen müssen zwischen 0 und 1 liegen.")
 
     results = []
     for threshold in dict.fromkeys(thresholds):
