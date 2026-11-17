@@ -169,7 +169,7 @@ def audit_detection_dataset(root: Path) -> dict:
             if (not isinstance(bbox, list) or len(bbox) != 4
                     or any(isinstance(v, bool) or not isinstance(v, (int, float))
                            or not math.isfinite(v) for v in bbox)):
-                report["errors"].append(f"{split}: Annotation {aid} hat keine gültige [x,y,w,h]-Box.")
+                report["errors"].append(f"{split}: Annotation {aid} hat keine gültige Bounding Box [x,y,w,h].")
                 continue
             x, y, width, height = map(float, bbox)
             image_width, image_height = image_paths[image_id][1:]

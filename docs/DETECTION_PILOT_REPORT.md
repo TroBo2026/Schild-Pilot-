@@ -81,3 +81,7 @@ Der COCO-Intake-Audit wurde gehärtet, damit fehlerhafte JSON-Typen nicht erst i
 Die vorhandenen Mini-Fixtures wurden um ungültige ID-/Dimensionsfälle erweitert. Die Tests verwenden ausschließlich synthetische Testbilder; der reale TrafficSigns-Raw-Datensatz wurde in dieser Runde nicht erneut heruntergeladen oder verarbeitet.
 
 Der Null-TP-Trainingslauf ist damit noch nicht erklärt. Der nächste diagnostische Schritt bleibt die visuelle Stichprobe der Original-Boxen und der Vergleich von Klassenverteilung und Box-Flächenanteilen aus dem erweiterten Audit. Kein Training wurde gestartet.
+
+### CI-Nachkorrektur zum Audit (17.11.2026)
+
+Der erste Lauf nach der Audit-Erweiterung (GitHub Actions Run 72) kompilierte alle Module, führte 40 Tests aus und fand einen Assertion-Fehler: Die neue Boolean-Box-Prüfung erkannte den ungültigen Wert korrekt, aber der Meldungstext enthielt nicht die vom Test erwartete Formulierung „Bounding Box“. Die fachliche Validierung war aktiv; die Abweichung lag im Fehlertext. Der Meldungstext wurde präzisiert. Der Korrekturlauf muss noch erfolgreich abgeschlossen werden, bevor die Änderung als vollständig verifiziert gilt.
