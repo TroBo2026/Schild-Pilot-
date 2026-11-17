@@ -68,3 +68,16 @@ Nach Prüfung des aktuellen `main`-Stands wurden die Eingabegrenzen der Detektio
 Dafür wurden `training/detection_metrics.py` und `tests/test_detection_metrics.py` geändert. GitHub Actions Run 70 auf `main` (Commit `fd41389334005d2af590a80a72bd7756864d8228`) führte die Python-Kompilierungsprüfung und **36 Unit-Tests erfolgreich** aus: https://github.com/TroBo2026/Schild-Pilot-/actions/runs/43928494962
 
 In diesem Lauf wurde kein Datensatz heruntergeladen, kein Modell trainiert und kein Modellgewicht hochgeladen. Die Metrik bleibt ein diagnostisches greedy 1:1-IoU-Verfahren und ist kein COCO-mAP-Ersatz. Die reale Detektionsleistung ist weiterhin nicht nachgewiesen; vor einem neuen Training müssen Box-Skalierung, Klassenmapping und Annotationen anhand lizenzierter Beispiele geprüft werden.
+
+## Folgeprüfung und Detektionsdaten-Audit vom 17.11.2026
+
+Der COCO-Intake-Audit wurde gehärtet, damit fehlerhafte JSON-Typen nicht erst im DataLoader oder in TorchVision auffallen:
+
+- Kategorie-, Bild- und Annotations-IDs müssen positive JSON-Ganzzahlen sein; boolesche, negative, dezimale, textuelle und nicht-hashbare Werte werden mit Auditfehlern abgewiesen.
+- Bildbreite und -höhe müssen positive Ganzzahlen sein. Boolesche Werte, Fließkommawerte, Null und nicht-endliche Werte werden nicht akzeptiert.
+- Boolesche Bounding-Box-Koordinaten werden nicht mehr als Zahlen durchgelassen.
+- Der Auditbericht enthält jetzt Annotationen je Kategorie, Bilder ohne gültige Annotationen sowie Minimum/Median/Maximum des Bounding-Box-Flächenanteils am jeweiligen Bild. Diese Kennzahlen helfen bei der späteren Prüfung von Klassenverteilung und Box-Skalierung; sie ersetzen keine visuelle Stichprobe.
+
+Die vorhandenen Mini-Fixtures wurden um ungültige ID-/Dimensionsfälle erweitert. Die Tests verwenden ausschließlich synthetische Testbilder; der reale TrafficSigns-Raw-Datensatz wurde in dieser Runde nicht erneut heruntergeladen oder verarbeitet.
+
+Der Null-TP-Trainingslauf ist damit noch nicht erklärt. Der nächste diagnostische Schritt bleibt die visuelle Stichprobe der Original-Boxen und der Vergleich von Klassenverteilung und Box-Flächenanteilen aus dem erweiterten Audit. Kein Training wurde gestartet.

@@ -19,6 +19,11 @@ SPLITS = ("train", "val", "test")
 IMAGE_SUFFIXES = {".jpg", ".jpeg", ".png", ".bmp", ".webp"}
 
 
+def _positive_int(value: object) -> bool:
+    """COCO IDs and image dimensions must be positive JSON integers, not bools."""
+    return type(value) is int and value > 0
+
+
 def _sha256(path: Path) -> str:
     digest = hashlib.sha256()
     with path.open("rb") as stream:
@@ -72,15 +77,20 @@ def audit_detection_dataset(root: Path) -> dict:
         category_pairs = []
         category_ids = set()
         for category in categories:
-            if not isinstance(category, dict) or "id" not in category or not isinstance(category.get("name"), str):
+            if not isinstance(category, dict):
                 report["errors"].append(f"{split}: ungültige Kategorie.")
                 continue
-            cid = category["id"]
+            cid, name = category.get("id"), category.get("name")
+            if not _positive_int(cid) or not isinstance(name, str) or not name.strip():
+                report["errors"].append(
+                    f"{split}: Kategorie-ID muss eine positive ganze Zahl und der Name nicht leer sein."
+                )
+                continue
             if cid in category_ids:
                 report["errors"].append(f"{split}: doppelte category id {cid}.")
             category_ids.add(cid)
-            category_pairs.append((cid, category["name"]))
-        category_signature = sorted(category_pairs, key=lambda item: str(item[0]))
+            category_pairs.append((cid, name))
+        category_signature = sorted(category_pairs, key=lambda item: item[0])
         if reference_categories is None:
             reference_categories = category_signature
         elif category_signature != reference_categories:
@@ -96,11 +106,14 @@ def audit_detection_dataset(root: Path) -> dict:
                 continue
             image_id, filename = item.get("id"), item.get("file_name")
             width, height = item.get("width"), item.get("height")
-            if image_id is None or image_id in image_ids:
-                report["errors"].append(f"{split}: fehlende oder doppelte image id {image_id}.")
+            if not _positive_int(image_id):
+                report["errors"].append(f"{split}: image id muss eine positive ganze Zahl sein.")
+                continue
+            if image_id in image_ids:
+                report["errors"].append(f"{split}: doppelte image id {image_id}.")
                 continue
             image_ids.add(image_id)
-            if not isinstance(filename, str) or not filename:
+            if not isinstance(filename, str) or not filename.strip():
                 report["errors"].append(f"{split}: image {image_id} hat keinen Dateinamen.")
                 continue
             rel = Path(filename)
@@ -113,8 +126,10 @@ def audit_detection_dataset(root: Path) -> dict:
             if rel.suffix.lower() not in IMAGE_SUFFIXES or not candidate.is_file():
                 report["errors"].append(f"{split}: Bilddatei fehlt oder Format unbekannt: {filename}")
                 continue
-            if not isinstance(width, (int, float)) or not isinstance(height, (int, float)) or width <= 0 or height <= 0:
-                report["errors"].append(f"{split}: ungültige Bildgröße für {filename}.")
+            if not _positive_int(width) or not _positive_int(height):
+                report["errors"].append(
+                    f"{split}: Bildbreite und -höhe müssen positive ganze Zahlen sein ({filename})."
+                )
                 continue
             image_paths[image_id] = (filename, float(width), float(height))
             image_count += 1
@@ -123,24 +138,37 @@ def audit_detection_dataset(root: Path) -> dict:
 
         annotation_ids = set()
         annotation_count = 0
+        annotations_by_category = {cid: 0 for cid in category_ids}
+        image_annotation_counts = {image_id: 0 for image_id in image_paths}
+        bbox_area_ratios = []
         for ann in annotations:
             if not isinstance(ann, dict):
                 report["errors"].append(f"{split}: ungültiger Annotationseintrag.")
                 continue
             aid, image_id, category_id = ann.get("id"), ann.get("image_id"), ann.get("category_id")
-            if aid is None or aid in annotation_ids:
-                report["errors"].append(f"{split}: fehlende oder doppelte annotation id {aid}.")
+            if not _positive_int(aid):
+                report["errors"].append(f"{split}: annotation id muss eine positive ganze Zahl sein.")
+                continue
+            if aid in annotation_ids:
+                report["errors"].append(f"{split}: doppelte annotation id {aid}.")
                 continue
             annotation_ids.add(aid)
+            if not _positive_int(image_id):
+                report["errors"].append(f"{split}: Annotation {aid} hat eine ungültige image_id.")
+                continue
             if image_id not in image_paths:
                 report["errors"].append(f"{split}: Annotation {aid} verweist auf unbekanntes Bild {image_id}.")
+                continue
+            if not _positive_int(category_id):
+                report["errors"].append(f"{split}: Annotation {aid} hat eine ungültige category_id.")
                 continue
             if category_id not in category_ids:
                 report["errors"].append(f"{split}: Annotation {aid} verweist auf unbekannte Kategorie {category_id}.")
                 continue
             bbox = ann.get("bbox")
             if (not isinstance(bbox, list) or len(bbox) != 4
-                    or any(not isinstance(v, (int, float)) or not math.isfinite(v) for v in bbox)):
+                    or any(isinstance(v, bool) or not isinstance(v, (int, float))
+                           or not math.isfinite(v) for v in bbox)):
                 report["errors"].append(f"{split}: Annotation {aid} hat keine gültige [x,y,w,h]-Box.")
                 continue
             x, y, width, height = map(float, bbox)
@@ -151,13 +179,41 @@ def audit_detection_dataset(root: Path) -> dict:
                 report["errors"].append(f"{split}: Bounding Box {aid} liegt außerhalb des Bildes oder ist leer.")
                 continue
             annotation_count += 1
+            annotations_by_category[category_id] += 1
+            image_annotation_counts[image_id] += 1
+            bbox_area_ratios.append((width * height) / (image_width * image_height))
+
+        sorted_ratios = sorted(bbox_area_ratios)
+        if sorted_ratios:
+            middle = len(sorted_ratios) // 2
+            median_ratio = (
+                sorted_ratios[middle] if len(sorted_ratios) % 2
+                else (sorted_ratios[middle - 1] + sorted_ratios[middle]) / 2
+            )
+            area_ratio_summary = {
+                "min": sorted_ratios[0],
+                "median": median_ratio,
+                "max": sorted_ratios[-1],
+            }
+        else:
+            area_ratio_summary = None
 
         report["splits"][split] = {
-            "images": image_count, "annotations": annotation_count,
+            "images": image_count,
+            "annotations": annotation_count,
             "categories": len(category_ids),
+            "annotations_by_category": {
+                str(cid): annotations_by_category[cid] for cid in sorted(annotations_by_category)
+            },
+            "images_without_annotations": sum(
+                count == 0 for count in image_annotation_counts.values()
+            ),
+            "bbox_area_ratio": area_ratio_summary,
         }
         if image_count and annotation_count == 0:
             report["warnings"].append(f"{split}: keine positiven Schilder-Annotationen gefunden.")
+        if any(count == 0 for count in annotations_by_category.values()):
+            report["warnings"].append(f"{split}: mindestens eine Kategorie hat keine gültigen Annotationen.")
 
     for digest, entries in hashes.items():
         if len({entry["split"] for entry in entries}) > 1:
