@@ -85,3 +85,7 @@ Der Null-TP-Trainingslauf ist damit noch nicht erklärt. Der nächste diagnostis
 ### CI-Nachkorrektur zum Audit (17.11.2026)
 
 Der erste Lauf nach der Audit-Erweiterung (GitHub Actions Run 72) kompilierte alle Module, führte 40 Tests aus und fand einen Assertion-Fehler: Die neue Boolean-Box-Prüfung erkannte den ungültigen Wert korrekt, aber der Meldungstext enthielt nicht die vom Test erwartete Formulierung „Bounding Box“. Die fachliche Validierung war aktiv; die Abweichung lag im Fehlertext. Der Meldungstext wurde präzisiert. Der Korrekturlauf muss noch erfolgreich abgeschlossen werden, bevor die Änderung als vollständig verifiziert gilt.
+
+### Ergebnis der CI-Nachkorrektur
+
+Der Meldungstext wurde in Commit `80a1bffed3ad698e774c60bba6349acca81919fe` präzisiert. GitHub Actions Run 73 auf `main` war erfolgreich: Python-Kompilierung bestanden und **40 Unit-Tests bestanden**. Die ursprüngliche Assertion-Abweichung ist damit behoben. Link: https://github.com/TroBo2026/Schild-Pilot-/actions/runs/44152462092
