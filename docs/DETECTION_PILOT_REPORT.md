@@ -89,3 +89,20 @@ Der erste Lauf nach der Audit-Erweiterung (GitHub Actions Run 72) kompilierte al
 ### Ergebnis der CI-Nachkorrektur
 
 Der Meldungstext wurde in Commit `80a1bffed3ad698e774c60bba6349acca81919fe` präzisiert. GitHub Actions Run 73 auf `main` war erfolgreich: Python-Kompilierung bestanden und **40 Unit-Tests bestanden**. Die ursprüngliche Assertion-Abweichung ist damit behoben. Link: https://github.com/TroBo2026/Schild-Pilot-/actions/runs/44152462092
+
+
+## Visuelle Stichprobenprüfung der Detektions-Annotationen (18.11.2026)
+
+Zur Vorbereitung der noch ausstehenden Sichtprüfung wurde `training.preview_detection_annotations` ergänzt. Das Werkzeug wählt aus einem lokalen COCO-Split deterministisch bis zu 12 annotierte Bilder aus, zeichnet die Ground-Truth-Bounding-Boxes samt Klassennamen ein und erstellt eine statische Offline-Ansicht (`index.html`) sowie `report.json`.
+
+- Eingaben: lokaler Datensatzordner und expliziter Split (Standard: `val`).
+- Sicherheitsprüfungen: Bildpfade müssen innerhalb des jeweiligen Bildordners liegen; IDs, Klassenreferenzen, Box-Grenzen und tatsächliche Bilddimensionen werden geprüft.
+- Datenschutz: keine Netzwerkzugriffe, keine Uploads, keine Änderung der Quelldateien. Vorschau-Ausgaben liegen unter `artifacts/`, das in `.gitignore` ausgeschlossen ist.
+- Reproduzierbarkeit: feste Seed-Auswahl; die ausgewählten Bild-IDs stehen im JSON-Bericht.
+- Abhängigkeiten: ausschließlich Pillow, bereits in `requirements.txt` und im Test-Workflow vorhanden.
+
+GitHub Actions [Run 75](https://github.com/TroBo2026/Schild-Pilot-/actions/runs/44373580395) auf `main`, Commit `08ba23de8175f7124e7e1e1404b7314aa261fd9c`: Python-Kompilierung erfolgreich, **45 Unit-Tests bestanden**. Die fünf neuen Tests prüfen die Offline-Erstellung, HTML-Escaping, reproduzierbare Auswahl, Pfad-Traversal-Abwehr, Box-Grenzen und Bildmaß-Konsistenz.
+
+**Wichtige Einschränkung:** Die Vorschaufunktion wurde in CI ausschließlich mit synthetischen Mini-Bildern getestet. Der reale TrafficSigns-Raw-Datensatz liegt nicht im Repository und wurde in diesem Lauf nicht erneut heruntergeladen. Deshalb wurden noch keine echten Datensatzbilder visuell geprüft und keine Ursache für die Null-TP-Detektion bestätigt. Vor einem Training muss die Vorschau lokal auf dem bereits rechtmäßig bezogenen Datensatz ausgeführt und stichprobenartig kontrolliert werden.
+
+In diesem Lauf wurde kein Modell trainiert, kein Datensatz heruntergeladen und kein Modellgewicht hochgeladen.
