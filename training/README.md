@@ -170,3 +170,22 @@ Wir aktivieren kein wahlloses Scraping. Weitere echte Bilddaten werden erst nach
 ## Sicherheitsgrenzen
 
 Schild Pilot ist ein Forschungs- und Lernprototyp. Keine Fahrzeugsteuerung, keine Fahrerassistenzfreigabe und keine Tests während der Fahrt. Für eine spätere reale Anwendung wären unabhängige, geografisch getrennte reale Testdaten, Detektion, robuste Unsicherheitsbehandlung, Kalibrierung und umfangreiche Sicherheitsvalidierung erforderlich.
+
+
+## Lokale visuelle Prüfung der Detektions-Annotationen
+
+Vor einem neuen Detektortraining können Ground-Truth-Boxen aus einem vorhandenen COCO-Split als lokale Offline-Ansicht geprüft werden. Das Werkzeug verwendet Pillow (bereits in `requirements.txt` enthalten), wählt Bilder reproduzierbar aus und zeichnet die gespeicherten Bounding Boxes mit Klassennamen ein.
+
+Beispiel für den Validierungssplit:
+
+```bash
+python -m training.preview_detection_annotations --data data/detection --split val --samples 12 --seed 42 --output artifacts/detection_preview
+```
+
+Danach `artifacts/detection_preview/index.html` lokal im Browser öffnen. `report.json` dokumentiert Bild-IDs, Quelldateinamen und Box-/Klassenanzahlen. Der Ausgabeordner liegt unter `artifacts/` und ist durch `.gitignore` vom Commit ausgeschlossen.
+
+Das Werkzeug:
+- liest ausschließlich den angegebenen lokalen Split und verändert keine Quelldateien;
+- akzeptiert keine Pfade außerhalb des jeweiligen Bildordners und prüft Boxen sowie tatsächliche Bilddimensionen;
+- lädt keine Daten herunter, verwendet keine externen Webressourcen und lädt keine Bilder hoch;
+- zeigt nur vorhandene Annotationen, keine Modellvorhersagen. Eine visuelle Stichprobe ist kein Beleg für die Korrektheit aller Labels oder die Detektionsleistung.
