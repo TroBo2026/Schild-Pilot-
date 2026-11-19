@@ -189,3 +189,8 @@ Das Werkzeug:
 - akzeptiert keine Pfade außerhalb des jeweiligen Bildordners und prüft Boxen sowie tatsächliche Bilddimensionen;
 - lädt keine Daten herunter, verwendet keine externen Webressourcen und lädt keine Bilder hoch;
 - zeigt nur vorhandene Annotationen, keine Modellvorhersagen. Eine visuelle Stichprobe ist kein Beleg für die Korrektheit aller Labels oder die Detektionsleistung.
+
+
+## Verbindliche Aufnahmeprüfung
+
+Vor dem Import einer neuen Datenquelle die [Datensatz-Freigabecheckliste](../docs/DATASET_ADMISSION_CHECKLIST.md) vollständig ausfüllen. Bei unklaren Rechten, geografischer Abdeckung, Annotationen oder Split-Provenienz gilt **HALT**; keine Daten herunterladen und kein Training starten.
