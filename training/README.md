@@ -174,7 +174,7 @@ Schild Pilot ist ein Forschungs- und Lernprototyp. Keine Fahrzeugsteuerung, kein
 
 ## Lokale visuelle Prüfung der Detektions-Annotationen
 
-Vor einem neuen Detektortraining können Ground-Truth-Boxen aus einem vorhandenen COCO-Split als lokale Offline-Ansicht geprüft werden. Das Werkzeug verwendet Pillow (bereits in `requirements.txt` enthalten), wählt Bilder reproduzierbar aus und zeichnet die gespeicherten Bounding Boxes mit Klassennamen ein.
+Vor einem neuen Detektortraining können Ground-Truth-Boxen aus einem vorhandenen COCO-Split als lokale Offline-Ansicht geprüft werden. Das Werkzeug verwendet Pillow (bereits in `requirements.txt` enthalten), wählt Bilder mit einem deterministischen, seltene Kategorien bevorzugenden Coverage-Verfahren aus und zeichnet die gespeicherten Bounding Boxes mit Klassennamen ein. Die Auswahl kann bei begrenzter Stichprobengröße nicht alle Kategorien abdecken; die Strategie und die tatsächlich ausgewählten Kategorien stehen in `report.json`.
 
 Beispiel für den Validierungssplit:
 
