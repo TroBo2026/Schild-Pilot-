@@ -130,6 +130,52 @@ def _render_preview(
     image.save(destination, format="JPEG", quality=90, optimize=True)
 
 
+def _select_preview_images(
+    annotated_ids: list[int],
+    annotations_by_image: dict[int, list[dict]],
+    sample_count: int,
+    seed: int,
+) -> list[int]:
+    """Prefer seeded coverage of rare categories, then fill randomly."""
+    target = min(sample_count, len(annotated_ids))
+    image_categories = {
+        image_id: {entry["category_id"] for entry in annotations_by_image[image_id]}
+        for image_id in annotated_ids
+    }
+    category_image_counts = Counter(
+        category_id
+        for categories_for_image in image_categories.values()
+        for category_id in categories_for_image
+    )
+    rng = random.Random(seed)
+    remaining = set(annotated_ids)
+    selected: list[int] = []
+    covered_categories: set[int] = set()
+
+    while len(selected) < target:
+        scores = {
+            image_id: sum(
+                1.0 / category_image_counts[category_id]
+                for category_id in image_categories[image_id]
+                if category_id not in covered_categories
+            )
+            for image_id in remaining
+        }
+        best_score = max(scores.values(), default=0.0)
+        if best_score <= 0:
+            selected.extend(rng.sample(sorted(remaining), target - len(selected)))
+            break
+        best_candidates = sorted(
+            image_id for image_id, score in scores.items() if score == best_score
+        )
+        chosen = rng.choice(best_candidates)
+        selected.append(chosen)
+        remaining.remove(chosen)
+        covered_categories.update(image_categories[chosen])
+
+    return sorted(selected)
+
+
 def generate_annotation_preview(
     data_root: Path,
     output_dir: Path,
@@ -221,8 +267,12 @@ def generate_annotation_preview(
     if not annotated_ids:
         raise ValueError(f"Im Split '{split}' wurden keine gültigen annotierten Bilder gefunden.")
 
-    rng = random.Random(seed)
-    selected_ids = sorted(rng.sample(annotated_ids, min(sample_count, len(annotated_ids))))
+    selected_ids = _select_preview_images(
+        annotated_ids,
+        annotations_by_image,
+        sample_count,
+        seed,
+    )
     output_dir.mkdir(parents=True, exist_ok=True)
 
     preview_items = []
@@ -256,6 +306,12 @@ def generate_annotation_preview(
         "requested_sample_count": sample_count,
         "generated_preview_count": len(preview_items),
         "max_edge": max_edge,
+        "sampling_strategy": "seeded greedy inverse-frequency category coverage; random fill after coverage",
+        "sampled_categories": sorted({
+            category_name
+            for item in preview_items
+            for category_name in item["categories"]
+        }),
         "images": preview_items,
         "notice": (
             "Lokale Sichtprüfung der vorhandenen Ground-Truth-Boxen. "
