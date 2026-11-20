@@ -106,3 +106,8 @@ GitHub Actions [Run 75](https://github.com/TroBo2026/Schild-Pilot-/actions/runs/
 **Wichtige Einschränkung:** Die Vorschaufunktion wurde in CI ausschließlich mit synthetischen Mini-Bildern getestet. Der reale TrafficSigns-Raw-Datensatz liegt nicht im Repository und wurde in diesem Lauf nicht erneut heruntergeladen. Deshalb wurden noch keine echten Datensatzbilder visuell geprüft und keine Ursache für die Null-TP-Detektion bestätigt. Vor einem Training muss die Vorschau lokal auf dem bereits rechtmäßig bezogenen Datensatz ausgeführt und stichprobenartig kontrolliert werden.
 
 In diesem Lauf wurde kein Modell trainiert, kein Datensatz heruntergeladen und kein Modellgewicht hochgeladen.
+
+
+## Stichprobenauswahl der Boxen-Vorschau (20.11.2026)
+
+Die lokale Vorschau wählt annotierte Bilder jetzt nicht mehr ausschließlich zufällig aus. Ein deterministisches Greedy-Verfahren bevorzugt zunächst Bilder, die bislang nicht vertretene Kategorien abdecken; seltene Kategorien erhalten dabei ein höheres Gewicht (inverse Bildhäufigkeit). Wenn die Kategorieabdeckung erschöpft ist, werden verbleibende Plätze seeded-random gefüllt. Die Auswahl bleibt durch den Seed reproduzierbar. `report.json` dokumentiert die Strategie und die ausgewählten Kategorien. Diese Heuristik erhöht die Chance, Label-/Mappingfehler in einer kleinen Sichtprobe zu finden, garantiert aber keine vollständige Klassenabdeckung und ersetzt keine manuelle Sichtprüfung.
