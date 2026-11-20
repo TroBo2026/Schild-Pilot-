@@ -104,5 +104,50 @@ class DetectionAnnotationPreviewTests(unittest.TestCase):
                 generate_annotation_preview(root, Path(tmp) / "preview")
 
 
+    def test_sampling_prefers_rare_category_coverage(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / "data"
+            split_dir = root / "val"
+            image_dir = split_dir / "images"
+            image_dir.mkdir(parents=True)
+            images = []
+            annotations = []
+            for image_id in range(1, 4):
+                filename = f"scene_{image_id}.jpg"
+                Image.new("RGB", (64, 48), (30, image_id * 30, 120)).save(
+                    image_dir / filename
+                )
+                images.append({
+                    "id": image_id,
+                    "file_name": filename,
+                    "width": 64,
+                    "height": 48,
+                })
+                annotations.append({
+                    "id": image_id,
+                    "image_id": image_id,
+                    "category_id": 1 if image_id < 3 else 2,
+                    "bbox": [8, 7, 24, 18],
+                })
+            payload = {
+                "images": images,
+                "annotations": annotations,
+                "categories": [
+                    {"id": 1, "name": "common"},
+                    {"id": 2, "name": "rare"},
+                ],
+            }
+            (split_dir / "annotations.json").write_text(
+                json.dumps(payload), encoding="utf-8"
+            )
+
+            report = generate_annotation_preview(
+                root, Path(tmp) / "preview", sample_count=2, seed=17
+            )
+            sampled_ids = {item["image_id"] for item in report["images"]}
+            self.assertIn(3, sampled_ids, "The only image with the rare category should be selected.")
+            self.assertEqual(report["sampled_categories"], ["common", "rare"])
+            self.assertIn("inverse-frequency category coverage", report["sampling_strategy"])
+
 if __name__ == "__main__":
     unittest.main()
