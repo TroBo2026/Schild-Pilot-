@@ -25,7 +25,7 @@ Quellen:
 - Veröffentlichter Umfang: 105.500 synthetisch gerenderte Bilder, 211 deutsche Verkehrszeichenklassen
 - Verwendete Konfiguration: `Cycles`
 - Verfügbare Quell-Splits in dieser Konfiguration: `train` und `validation`
-- Aktuelle Pilot-Stichprobe: 80 Train-, 10 Val- und 10 Testbilder je Klasse
+- Erweiterte Trainingskonfiguration: 350 Train-, 50 Val- und 50 Testbilder je Klasse (94.950 Bilder bei 211 Klassen)
 - Val und Test werden disjunkt aus dem Quell-Split `validation` gezogen. Es gibt in dieser Konfiguration keinen separat veröffentlichten offiziellen Test-Split.
 
 **Wichtige Grenzen:** Die Bilder sind synthetisch gerenderte Szenen und keine echten Kameraaufnahmen. Der Testsplit ist eine abgeleitete Teilmenge des Quell-Validation-Splits und kein unabhängiger offizieller Benchmark-Test. Die Daten decken deutsche Zeichen ab, nicht die internationale Taxonomie. Gute Ergebnisse hier belegen keine Erkennung auf realen Straßen.
@@ -37,7 +37,7 @@ Der kostenlose GitHub-Actions-CPU-Pilot verwendet ein vortrainiertes ResNet18. D
 Lokaler Ablauf:
 
 ```bash
-python -m training.prepare_synset_dataset --per-class-train 80 --per-class-val 10 --per-class-test 10
+python -m training.prepare_synset_dataset --per-class-train 350 --per-class-val 50 --per-class-test 50
 python -m training.audit_dataset --data data/signs
 python -m training.train_classifier --data data/signs --epochs 8 --batch-size 32 --image-size 160 --workers 2 --patience 3
 python -m training.evaluate_classifier --data data/signs/test
@@ -194,3 +194,12 @@ Das Werkzeug:
 ## Verbindliche Aufnahmeprüfung
 
 Vor dem Import einer neuen Datenquelle die [Datensatz-Freigabecheckliste](../docs/DATASET_ADMISSION_CHECKLIST.md) vollständig ausfüllen. Bei unklaren Rechten, geografischer Abdeckung, Annotationen oder Split-Provenienz gilt **HALT**; keine Daten herunterladen und kein Training starten.
+
+
+## Erweiterter Trainingslauf (ab 21.11.2026)
+
+Die GitHub-Actions-Konfiguration wurde auf 350 Trainings-, 50 Validierungs- und 50 Testbilder pro Klasse umgestellt. Bei 211 Klassen entspricht das 73.850 Train-, 10.550 Val- und 10.550 Testbildern (94.950 insgesamt). Der Trainingsworkflow verwendet zunächst zwei Epochen auf CPU, damit der größere Lauf innerhalb des verfügbaren CI-Zeitfensters geprüft werden kann.
+
+Dieser Lauf ist **noch nicht als erfolgreich bestätigt**. Erst nach einem abgeschlossenen Workflow mit vollständigem Dataset-Audit, Modelltraining, Validierungskalibrierung und Testauswertung dürfen neue Kennzahlen angegeben werden. Falls das 45-Minuten-Limit erreicht wird, muss die Trainingsstrategie angepasst werden; dann darf kein unvollständiges Ergebnis als Erfolg ausgegeben werden.
+
+Die Quelle bleibt synthetisch. Mehr Bilder verbessern die Abdeckung des synthetischen Datensatzes, ersetzen aber keine unabhängigen realen Kameraaufnahmen.
