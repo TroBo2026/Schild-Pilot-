@@ -4,21 +4,40 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#10151b">
-  <meta name="description" content="Schild Pilot – experimenteller Verkehrszeichen-Erkennungsprototyp">
+  <meta name="description" content="Schild Pilot – deutscher Verkehrszeichen-Lernprototyp">
   <title>Schild Pilot</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 <main class="shell">
-  <header class="topbar"><div class="mark">SP</div><div><p class="eyebrow">GEPARD TECHNOLOGY LAB</p><h1>Schild Pilot</h1></div><span class="status">PROTOTYP</span></header>
-  <section class="intro"><p class="eyebrow">COMPUTER VISION · PHASE 0</p><h2>Verkehrszeichen verstehen.</h2><p class="muted">Nimm ein Foto auf oder wähle ein Bild aus deiner Mediathek. Die eigentliche KI-Erkennung wird schrittweise ergänzt.</p></section>
-  <section class="panel">
-    <div class="panel-head"><div><p class="eyebrow">BILDEINGABE</p><h3>Testbild hinzufügen</h3></div><span class="step">01 / 03</span></div>
-    <label class="dropzone" for="imageInput"><span class="upload-icon">＋</span><strong>Foto aufnehmen oder auswählen</strong><span class="muted small">JPG, PNG oder WEBP · möglichst scharf und gut beleuchtet</span><input id="imageInput" type="file" accept="image/*" capture="environment"></label>
-    <div id="previewWrap" class="preview-wrap" hidden><img id="preview" alt="Ausgewähltes Testbild"><button id="clearButton" class="secondary" type="button">Bild entfernen</button></div>
-    <button id="analyzeButton" class="primary" type="button" disabled>Bild überprüfen</button><p id="statusText" class="hint" role="status">Noch kein Bild ausgewählt.</p>
+  <header class="topbar"><div class="mark">SP</div><div><p class="eyebrow">GEPARD TECHNOLOGY LAB</p><h1>Schild Pilot</h1></div><span class="status">DEUTSCHLAND</span></header>
+  <section class="intro"><p class="eyebrow">DEUTSCHE VERKEHRSZEICHEN</p><h2>Verkehrszeichen erkennen und verstehen.</h2><p class="muted">Lerne zuerst Name und Bedeutung eines deutschen Verkehrszeichens. Danach prüft Schild Pilot dein Wissen mit einer kurzen Frage.</p></section>
+
+  <section class="panel learning-panel" aria-live="polite">
+    <div class="panel-head"><div><p class="eyebrow">LERNMODUS</p><h3 id="lessonTitle">Verkehrszeichen 205</h3></div><span class="step" id="lessonCount">01 / 08</span></div>
+    <div id="lessonArtwork" class="sign-art" role="img" aria-label="Darstellung eines deutschen Verkehrszeichens"></div>
+    <div class="lesson-copy"><h4 id="lessonName">Vorfahrt gewähren</h4><p id="lessonMeaning" class="muted">Du musst dem Verkehr auf der bevorrechtigten Straße Vorfahrt gewähren.</p></div>
+    <button id="quizStartButton" class="primary" type="button">Verstanden – jetzt abfragen</button>
+    <div id="quizPanel" class="quiz-panel" hidden>
+      <p class="eyebrow">WISSENSCHECK</p>
+      <h4>Welches Verkehrszeichen ist das?</h4>
+      <div id="quizArtwork" class="sign-art compact" role="img" aria-label="Verkehrszeichen für die Quizfrage"></div>
+      <div id="answerOptions" class="answer-options"></div>
+      <p id="quizFeedback" class="quiz-feedback" role="status" aria-live="polite"></p>
+      <button id="nextSignButton" class="secondary" type="button" hidden>Nächstes Verkehrszeichen</button>
+    </div>
   </section>
-  <section class="panel" aria-live="polite"><p class="eyebrow">ANALYSEERGEBNIS</p><h3 id="resultTitle">Bereit für den ersten Test</h3><p id="resultText" class="muted">Die Fotoeingabe ist vorbereitet. Ein trainiertes Erkennungsmodell ist noch nicht verbunden – deshalb wird kein Verkehrszeichen geraten.</p><div class="result-meta"><span>Detektion<b>in Entwicklung</b></span><span>Klassifikation<b>in Entwicklung</b></span></div></section>
-  <footer><p>Experimenteller Prototyp · Keine Fahrassistenz</p><p>Nur im Stand testen. Nicht während der Fahrt bedienen.</p></footer>
-</main><script src="app.js"></script>
+
+  <section class="panel">
+    <div class="panel-head"><div><p class="eyebrow">FOTO-PROTOTYP</p><h3>Eigenes Bild vorbereiten</h3></div><span class="step">02 / 02</span></div>
+    <label class="dropzone" for="imageInput"><span class="upload-icon">＋</span><strong>Foto aufnehmen oder auswählen</strong><span class="muted small">JPG, PNG oder WEBP · nur im sicheren Stillstand</span><input id="imageInput" type="file" accept="image/*" capture="environment"></label>
+    <div id="previewWrap" class="preview-wrap" hidden><img id="preview" alt="Ausgewähltes Testbild"><button id="clearButton" class="secondary" type="button">Bild entfernen</button></div>
+    <button id="analyzeButton" class="primary" type="button" disabled>Bild überprüfen</button>
+    <p id="statusText" class="hint" role="status">Noch kein Bild ausgewählt. Die KI-Fotoerkennung ist noch nicht verbunden.</p>
+  </section>
+
+  <section class="panel" aria-live="polite"><p class="eyebrow">MODELLSTATUS</p><h3 id="resultTitle">Lernmodus verfügbar</h3><p id="resultText" class="muted">Der Lernmodus verwendet einen geprüften, kleinen Katalog deutscher Verkehrszeichen. Die Foto-KI ist noch nicht mit dem Klassifikationsmodell verbunden; deshalb wird bei eigenen Fotos kein Ergebnis geraten.</p><div class="result-meta"><span>Deutsche Lernzeichen<b>8 im ersten Lernpaket</b></span><span>Foto-KI<b>in Entwicklung</b></span></div></section>
+  <footer><p>Forschungs- und Lernprototyp · Keine Fahrassistenz</p><p>Gerät nur im Stand bedienen. Nicht während der Fahrt oder beim Radfahren verwenden.</p><p>Rechtsgrundlage: StVO, Anlagen 2 und 3.</p></footer>
+</main>
+<script src="app.js"></script>
 </body></html>
