@@ -1,6 +1,6 @@
 # Schild Pilot
 
-Schild Pilot ist ein kostenloser Lern- und Forschungsprototyp für **deutsche Verkehrszeichen**. Der erste Produktfokus ist bewusst eng: deutsche StVO-Zeichen erkennen, korrekt benennen, ihre Bedeutung verständlich erklären und das Wissen anschließend mit kurzen Fragen abprüfen.
+Schild Pilot ist ein kostenloser, modularer Lern- und Forschungsprototyp zur Verkehrszeichenerkennung. Der Einstieg ist bewusst auf deutsche Verkehrszeichen begrenzt; die langfristige Architektur soll weitere Länder und Zeichensysteme unterstützen.
 
 ## Aktueller Funktionsumfang
 
@@ -11,24 +11,33 @@ Schild Pilot ist ein kostenloser Lern- und Forschungsprototyp für **deutsche Ve
 
 ## KI-Trainingsstand
 
-Der Klassifikator ist ein ResNet18 für 211 deutsche Verkehrszeichenklassen aus dem Datensatz [Fraunhofer IOSB Synset Signset Germany](https://huggingface.co/datasets/FraunhoferIOSB/Synset-Signset-Germany), Konfiguration `Cycles`. Der Datensatz umfasst synthetisch gerenderte Bilder, keine echten Kameraaufnahmen.
+Der Klassifikator ist ein ResNet18 für 211 deutsche Verkehrszeichenklassen aus dem Datensatz [Fraunhofer IOSB Synset Signset Germany](https://huggingface.co/datasets/FraunhoferIOSB/Synset-Signset-Germany), Konfiguration `Cycles`. Der Datensatz enthält synthetisch gerenderte Szenen, keine echten Kameraaufnahmen.
 
-Der bisherige Pilot nutzte 80 Trainings-, 10 Validierungs- und 10 Testbilder pro Klasse:
-- 16.880 Trainingsbilder
-- 2.110 Validierungsbilder
-- 2.110 Testbilder
+### Bisheriger Pilot vom 13.11.2026
+- 16.880 Trainings-, 2.110 Validierungs- und 2.110 Testbilder
 - Test Top-1: 87,54 %
 - Test Top-5: 96,68 %
+- Abdeckung der akzeptierten Vorhersagen: 88,20 %
+- Genauigkeit auf akzeptierten Vorhersagen: 93,93 %
 
-Diese Werte sind ein interner synthetischer Pilotvergleich. Val und Test stammen aus getrennten Teilmengen des Quell-Splits `validation`; es gibt in dieser Konfiguration keinen offiziellen Test-Split. Die Zahlen sind kein Nachweis für zuverlässige Erkennung realer Straßenfotos.
+### Erweiterter Pilot vom 21.11.2026
+GitHub Actions: [Run 44921927981](https://github.com/TroBo2026/Schild-Pilot-/actions/runs/44921927981)
 
-**Erweiterter Trainingslauf:** Die Datenvorbereitung und GitHub-Actions-Konfiguration sind jetzt auf 350 Trainings-, 50 Validierungs- und 50 Testbilder pro Klasse eingestellt. Zielumfang bei 211 Klassen:
-- 73.850 Trainingsbilder
-- 10.550 Validierungsbilder
-- 10.550 Testbilder
-- insgesamt 94.950 Bilder
+- 73.850 Trainings-, 10.550 Validierungs- und 10.550 Testbilder (211 Klassen; 94.950 Bilder insgesamt)
+- Zwei CPU-Trainingsepochen; bestes Validierungsergebnis: 89,95 %
+- Test Top-1: 89,77 %
+- Test Top-5: 97,85 %
+- Test-Macro-Top-1: 89,77 %
+- Enthaltungsregel: 8.473 akzeptierte und 2.077 zurückgewiesene Testvorhersagen
+- Testabdeckung: 80,31 %
+- Genauigkeit auf akzeptierten Testvorhersagen: 98,61 %
+- Datensatz-Audit: 0 Fehler, 0 Warnungen
 
-Der erweiterte Lauf ist noch nicht als erfolgreich bestätigt. Seine Ergebnisse werden erst nach abgeschlossenem Training und Testauswertung veröffentlicht. Der Testsplit wird nicht zur Modellauswahl oder Schwellenwertkalibrierung verwendet.
+**Interpretation:** Der Testsplit besteht aus einer disjunkten Teilmenge des Quell-Splits `validation`; die Datenquelle veröffentlicht in dieser Konfiguration keinen unabhängigen offiziellen Testsplit. Alle Bilder sind synthetisch und die Taxonomie ist deutsch. Die Kennzahlen belegen weder globale Abdeckung noch Erkennung realer Kameraaufnahmen oder Sicherheit im Straßenverkehr. Die Modell-Scores sind keine kalibrierten Sicherheitswahrscheinlichkeiten.
+
+Der Trainingslauf erzeugte ein temporäres CI-Artefakt von 41.922.682 Bytes, das auch Modellgewichte enthielt. Dieses Artefakt ist laut GitHub bis zum 28.11.2026 aufbewahrt. Die Workflow-Konfiguration wurde danach geändert: zukünftige Trainingsläufe starten nicht automatisch bei Pushes, benötigen eine explizite manuelle Bestätigung und laden nur Auswertungsdateien sowie das Datenquellenmanifest hoch – keine Modellgewichte.
+
+## Architektur und nächste Schritte
 
 ## Architektur und nächste Schritte
 
