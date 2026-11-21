@@ -1,18 +1,20 @@
 name: Synthetic German sign classifier training
+
 on:
-  push:
-    branches: [main]
-    paths:
-      - "training/prepare_synset_dataset.py"
-      - "training/train_classifier.py"
-      - "training/evaluate_classifier.py"
-      - "training/calibrate_thresholds.py"
-      - ".github/workflows/synthetic-training.yml"
   workflow_dispatch:
+    inputs:
+      confirm_training:
+        description: "Explizit bestätigen: 94.950 synthetische Bilder laden und ResNet18 auf CPU trainieren."
+        required: true
+        type: boolean
+        default: false
+
 permissions:
   contents: read
+
 jobs:
   train-pilot:
+    if: ${{ inputs.confirm_training == true }}
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
@@ -36,12 +38,11 @@ jobs:
         run: python -m training.calibrate_thresholds --data data/signs/val --min-coverage 0.80
       - name: Evaluate once on held-out derived test split
         run: python -m training.evaluate_classifier --data data/signs/test
-      - name: Upload model metrics and source manifest
+      - name: Upload metrics and source manifest only
         uses: actions/upload-artifact@v4
         with:
-          name: schild-pilot-expanded-german-classifier
+          name: schild-pilot-expanded-german-metrics
           path: |
-            artifacts/sign_classifier/
             artifacts/evaluation/
             data/signs/source_manifest.json
           if-no-files-found: error
