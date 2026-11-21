@@ -32,7 +32,7 @@ Quellen:
 
 ## Trainingsverfahren
 
-Der kostenlose GitHub-Actions-CPU-Pilot verwendet ein vortrainiertes ResNet18. Der finale Residualblock (`layer4`) und Klassifikationskopf werden feinabgestimmt; frühere Merkmalsextraktionsblöcke bleiben eingefroren. Train-Augmentationen, AdamW, Cosine-Lernratenplan und Early Stopping sind aktiviert. Das beste Modell wird anhand der Validierungsgenauigkeit ausgewählt; der Testsplit bleibt bis zur finalen Evaluation unangetastet.
+Der manuell ausgelöste GitHub-Actions-CPU-Pilot verwendet ein vortrainiertes ResNet18. Der finale Residualblock (`layer4`) und Klassifikationskopf werden feinabgestimmt; frühere Merkmalsextraktionsblöcke bleiben eingefroren. Train-Augmentationen, AdamW, Cosine-Lernratenplan und Early Stopping sind aktiviert. Das beste Modell wird anhand der Validierungsgenauigkeit ausgewählt; der Testsplit bleibt bis zur finalen Evaluation unangetastet.
 
 Lokaler Ablauf:
 
