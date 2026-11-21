@@ -196,10 +196,23 @@ Das Werkzeug:
 Vor dem Import einer neuen Datenquelle die [Datensatz-Freigabecheckliste](../docs/DATASET_ADMISSION_CHECKLIST.md) vollständig ausfüllen. Bei unklaren Rechten, geografischer Abdeckung, Annotationen oder Split-Provenienz gilt **HALT**; keine Daten herunterladen und kein Training starten.
 
 
-## Erweiterter Trainingslauf (ab 21.11.2026)
+## Erweiterter synthetischer Klassifikationslauf (21.11.2026)
 
-Die GitHub-Actions-Konfiguration wurde auf 350 Trainings-, 50 Validierungs- und 50 Testbilder pro Klasse umgestellt. Bei 211 Klassen entspricht das 73.850 Train-, 10.550 Val- und 10.550 Testbildern (94.950 insgesamt). Der Trainingsworkflow verwendet zunächst zwei Epochen auf CPU, damit der größere Lauf innerhalb des verfügbaren CI-Zeitfensters geprüft werden kann.
+GitHub Actions: https://github.com/TroBo2026/Schild-Pilot-/actions/runs/44921927981
 
-Dieser Lauf ist **noch nicht als erfolgreich bestätigt**. Erst nach einem abgeschlossenen Workflow mit vollständigem Dataset-Audit, Modelltraining, Validierungskalibrierung und Testauswertung dürfen neue Kennzahlen angegeben werden. Falls das 45-Minuten-Limit erreicht wird, muss die Trainingsstrategie angepasst werden; dann darf kein unvollständiges Ergebnis als Erfolg ausgegeben werden.
+- 211 deutsche Klassen; 73.850 Trainings-, 10.550 Validierungs- und 10.550 abgeleitete Testbilder (94.950 insgesamt)
+- Zwei CPU-Epochen; bestes Validierungsergebnis: 89,95 %
+- Test Top-1: 89,77 %; Top-5: 97,85 %; Macro-Top-1: 89,77 %
+- Validierungsbasierter Betriebspunkt mit mindestens 80 % Zielabdeckung
+- Test: 8.473 akzeptierte und 2.077 zurückgewiesene Vorhersagen; Abdeckung 80,31 %; Genauigkeit auf akzeptierten Vorhersagen 98,61 %
+- Dataset-Audit: 0 Fehler und 0 Warnungen
 
-Die Quelle bleibt synthetisch. Mehr Bilder verbessern die Abdeckung des synthetischen Datensatzes, ersetzen aber keine unabhängigen realen Kameraaufnahmen.
+**Einschränkungen:** Der Testsplit wurde disjunkt aus dem Quell-Split `validation` abgeleitet; es gibt in dieser Konfiguration keinen offiziellen unabhängigen Testsplit. Alle Bilder sind synthetische Szenen, die Taxonomie ist deutsch und die Aufgabe ist Klassifikation zugeschnittener Schilder. Die Ergebnisse sagen nichts über Realbild-Detektion, globale Abdeckung oder sicherheitskritische Leistung aus.
+
+Der Lauf erzeugte ein temporäres GitHub-Artefakt von 41.922.682 Bytes mit Modellgewichten und Auswertungsdateien. Die dokumentierte Aufbewahrungsfrist endet am 28.11.2026. Die Workflow-Konfiguration wurde anschließend auf manuelle Auslösung mit erforderlicher Bestätigung umgestellt. Zukünftige Artefakte enthalten nur Auswertungen und das Quellenmanifest, keine Modellgewichte.
+
+## Kontrollierte Trainingsausführung
+
+`.github/workflows/synthetic-training.yml` startet nicht mehr automatisch bei Änderungen auf `main`. Eine Ausführung ist ausschließlich über `workflow_dispatch` möglich; das boolesche Eingabefeld `confirm_training` ist standardmäßig `false` und muss ausdrücklich bestätigt werden. Der Job wird ohne diese Bestätigung übersprungen. Das Workflow-Artefakt enthält nur `artifacts/evaluation/` und `data/signs/source_manifest.json`; `artifacts/sign_classifier/` mit Modellgewichten wird nicht hochgeladen.
+
+Vor jeder manuellen Ausführung müssen Lizenz, verfügbare Rechenzeit, Downloadgröße und Speicher erneut geprüft werden. Ein erfolgreicher Workflow-Status ist kein Nachweis für reale Erkennungsleistung.
