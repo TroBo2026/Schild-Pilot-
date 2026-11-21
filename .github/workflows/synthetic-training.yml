@@ -1,4 +1,4 @@
-name: Synthetic sign classifier pilot
+name: Synthetic German sign classifier training
 on:
   push:
     branches: [main]
@@ -26,12 +26,12 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
           python -m pip install "datasets>=3.0" "Pillow>=10.0" "numpy>=1.26" "scikit-learn>=1.4" "matplotlib>=3.8"
-      - name: Prepare larger balanced licensed pilot subset
-        run: python -m training.prepare_synset_dataset --per-class-train 80 --per-class-val 10 --per-class-test 10
+      - name: Prepare expanded balanced German dataset
+        run: python -m training.prepare_synset_dataset --per-class-train 350 --per-class-val 50 --per-class-test 50
       - name: Audit prepared dataset
         run: python -m training.audit_dataset --data data/signs
       - name: Fine-tune ResNet18 on CPU
-        run: python -m training.train_classifier --data data/signs --epochs 8 --batch-size 32 --image-size 160 --workers 2 --patience 3
+        run: python -m training.train_classifier --data data/signs --epochs 2 --batch-size 32 --image-size 160 --workers 2 --patience 2
       - name: Calibrate abstention thresholds on validation split only
         run: python -m training.calibrate_thresholds --data data/signs/val --min-coverage 0.80
       - name: Evaluate once on held-out derived test split
@@ -39,7 +39,7 @@ jobs:
       - name: Upload model metrics and source manifest
         uses: actions/upload-artifact@v4
         with:
-          name: schild-pilot-improved-synthetic-classifier
+          name: schild-pilot-expanded-german-classifier
           path: |
             artifacts/sign_classifier/
             artifacts/evaluation/
