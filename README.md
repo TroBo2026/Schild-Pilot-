@@ -39,8 +39,6 @@ Der Trainingslauf erzeugte ein temporäres CI-Artefakt von 41.922.682 Bytes, das
 
 ## Architektur und nächste Schritte
 
-## Architektur und nächste Schritte
-
 1. **Lernmodus:** geprüfte deutsche Zeichen und verständliche Erklärungen.
 2. **Klassifikation:** einen bereits ausgeschnittenen Schildbereich einer der 211 Klassen zuordnen.
 3. **Detektion:** Schilder in vollständigen Fotos finden. Der bisherige Realbild-Pilot hatte keine brauchbaren Validierungstreffer; diese Pipeline bleibt ein offener Entwicklungsbereich.
