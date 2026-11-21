@@ -1,87 +1,58 @@
 # Schild Pilot
 
-Kostenlos entwickelter Lern- und Forschungsprototyp zur Verkehrszeichenerkennung.
+Schild Pilot ist ein kostenloser Lern- und Forschungsprototyp für **deutsche Verkehrszeichen**. Der erste Produktfokus ist bewusst eng: deutsche StVO-Zeichen erkennen, korrekt benennen, ihre Bedeutung verständlich erklären und das Wissen anschließend mit kurzen Fragen abprüfen.
 
-## Ziel und Grenzen
+## Aktueller Funktionsumfang
 
-Schild Pilot entwickelt zunächst die Klassifikation bereits zugeschnittener Verkehrszeichen. Danach folgen Detektion in vollständigen Straßenfotos und eine lokale Smartphone-Laufzeit. Das Projekt ist **keine Fahrassistenz** und wird nicht mit Fahrzeugsteuerungen verbunden.
+- Deutscher Lernmodus mit einer ersten Auswahl von acht häufigen Verkehrszeichen.
+- Ablauf pro Zeichen: Schild und Bedeutung lernen → Quizfrage zum selben Schild → Antwortfeedback und Erklärung → nächstes Zeichen.
+- Fotoauswahl und lokale Bildvorschau.
+- Die Foto-KI ist noch nicht mit dem Web-Prototyp verbunden. Bei eigenen Fotos wird deshalb kein Erkennungsergebnis vorgetäuscht.
 
-## Architektur
+## KI-Trainingsstand
 
-1. Bildauswahl oder spätere Fotoaufnahme
-2. **Detektion:** Schilderpositionen im Gesamtbild finden; ein experimenteller Detektor existiert, hat aber noch keine brauchbaren Treffer nachgewiesen
-3. **Klassifikation:** einen zugeschnittenen Schild-Ausschnitt einer Klasse zuordnen
-4. **Unsicherheit:** bei schwachen oder mehrdeutigen Ergebnissen keine definitive Aussage
-5. **Evaluation:** getrennte Daten-Splits, Kennzahlen je Klasse und Konfusionsmatrix
+Der Klassifikator ist ein ResNet18 für 211 deutsche Verkehrszeichenklassen aus dem Datensatz [Fraunhofer IOSB Synset Signset Germany](https://huggingface.co/datasets/FraunhoferIOSB/Synset-Signset-Germany), Konfiguration `Cycles`. Der Datensatz umfasst synthetisch gerenderte Bilder, keine echten Kameraaufnahmen.
 
-## Projektstatus
+Der bisherige Pilot nutzte 80 Trainings-, 10 Validierungs- und 10 Testbilder pro Klasse:
+- 16.880 Trainingsbilder
+- 2.110 Validierungsbilder
+- 2.110 Testbilder
+- Test Top-1: 87,54 %
+- Test Top-5: 96,68 %
 
-**Phase 0:** mobiles Foto-Frontend, Bildvorschau und Grundstruktur vorhanden. Die Oberfläche führt noch keine Modellinferenz aus.
+Diese Werte sind ein interner synthetischer Pilotvergleich. Val und Test stammen aus getrennten Teilmengen des Quell-Splits `validation`; es gibt in dieser Konfiguration keinen offiziellen Test-Split. Die Zahlen sind kein Nachweis für zuverlässige Erkennung realer Straßenfotos.
 
-**Phase 1:** ein ResNet18-Klassifikationspilot wurde erfolgreich trainiert und ausgewertet. Der aktuelle Pilot umfasst 211 deutsche Verkehrszeichenklassen aus synthetisch gerenderten Bildern. Das Modell klassifiziert zugeschnittene Schilder, es erkennt noch keine Schilder in vollständigen Fotos.
+**Erweiterter Trainingslauf:** Die Datenvorbereitung und GitHub-Actions-Konfiguration sind jetzt auf 350 Trainings-, 50 Validierungs- und 50 Testbilder pro Klasse eingestellt. Zielumfang bei 211 Klassen:
+- 73.850 Trainingsbilder
+- 10.550 Validierungsbilder
+- 10.550 Testbilder
+- insgesamt 94.950 Bilder
 
-**Letzter erfolgreicher Trainingslauf:** 13. November 2026, GitHub Actions [Run 43472419845](https://github.com/TroBo2026/Schild-Pilot-/actions/runs/43472419845), Trainingscode-Commit `d65909aff7c8b2816ca2d536036954c3f3498929`. Der aktuelle Branch `main` enthält zusätzlich die nachfolgende Korrektur der Split-Provenienz.
+Der erweiterte Lauf ist noch nicht als erfolgreich bestätigt. Seine Ergebnisse werden erst nach abgeschlossenem Training und Testauswertung veröffentlicht. Der Testsplit wird nicht zur Modellauswahl oder Schwellenwertkalibrierung verwendet.
 
-| Kennzahl | Ergebnis |
-|---|---:|
-| Klassen | 211 |
-| Training | 16.880 Bilder (80 je Klasse) |
-| Validierung | 2.110 Bilder (10 je Klasse) |
-| Test | 2.110 Bilder (10 je Klasse) |
-| Test Top-1 | 87,54 % |
-| Test Top-5 | 96,68 % |
-| Abdeckung der akzeptierten Vorhersagen | 88,20 % |
-| Genauigkeit unter akzeptierten Vorhersagen | 93,93 % |
+## Architektur und nächste Schritte
 
-Die Enthaltungsregel hat 249 von 2.110 Testbildern als unsicher zurückgewiesen. Die Scores sind nicht kalibrierte Sicherheitswahrscheinlichkeiten.
+1. **Lernmodus:** geprüfte deutsche Zeichen und verständliche Erklärungen.
+2. **Klassifikation:** einen bereits ausgeschnittenen Schildbereich einer der 211 Klassen zuordnen.
+3. **Detektion:** Schilder in vollständigen Fotos finden. Der bisherige Realbild-Pilot hatte keine brauchbaren Validierungstreffer; diese Pipeline bleibt ein offener Entwicklungsbereich.
+4. **Integration:** Klassifikator und Detektor verbinden, Unsicherheit sauber behandeln und erst danach die Foto-KI im Frontend aktivieren.
+5. **iPhone:** spätere lokale Laufzeit und Offlinebetrieb, erst nach technischen Tests.
 
-**Wichtige Einschränkung der Evaluation:** Die Quelle veröffentlicht in der verwendeten Konfiguration keinen offiziellen Test-Split. Validierung und Test wurden als disjunkte Teilmengen aus dem Quell-Split `validation` gezogen. Die Werte sind daher ein reproduzierbarer interner Pilotvergleich, kein unabhängiger Benchmark-Nachweis.
+## Quellen, Daten und Lizenz
 
-**Phase 2:** Die COCO-Intake- und Audit-Pipeline ist implementiert. Ein lokales Offline-Werkzeug zur reproduzierbaren visuellen Stichprobenprüfung der Ground-Truth-Boxen ist ergänzt; es wurde bisher nur mit synthetischen Mini-Bildern getestet. TrafficSigns-Raw 0.2.0 wurde in einem isolierten GitHub-Actions-Lauf mit SHA-256 und CC-BY-4.0-Lizenznotiz geprüft; der Datensatz wurde nur im temporären Runner-Arbeitsbereich verarbeitet und nicht ins Repository übernommen. Der erste Faster-R-CNN-CPU-Versuch lief technisch durch, erreichte auf der Validierung aber in allen drei Epochen 0 True Positives. Das ist keine brauchbare Detektions-Baseline. Die neue Auswertung sweeped Score-Schwellen auf Val und lässt Test nur nach positivem Val-Ergebnis zu.
+- Fraunhofer IOSB Synset Signset Germany: [Datensatzseite](https://huggingface.co/datasets/FraunhoferIOSB/Synset-Signset-Germany), auf der Seite angegebene Lizenz CC BY 4.0.
+- Verkehrszeichen-Namen und Bedeutungen im Lernmodus orientieren sich an der deutschen Straßenverkehrs-Ordnung: [StVO, Anlage 2](https://www.gesetze-im-internet.de/stvo_2013/anlage_2.html) und [Anlage 3](https://www.gesetze-im-internet.de/stvo_2013/anlage_3.html).
 
-**Phase 3:** lokale Smartphone-/iPhone-Laufzeit und Offline-Tests; noch offen.
+Öffentlich sichtbare Bilder sind nicht automatisch frei für Training oder Weitergabe. Weitere Datenquellen werden erst nach Prüfung ihrer Lizenz, Herkunft, Annotationen und Nutzungsbedingungen aufgenommen. Keine wahllose Bildersammlung.
 
-## Daten und Lizenzen
-
-Verwendete Pilotquelle: [Fraunhofer IOSB Synset Signset Germany](https://huggingface.co/datasets/FraunhoferIOSB/Synset-Signset-Germany), Konfiguration `Cycles`, auf der Dataset-Seite mit CC BY 4.0 angegeben. Sie enthält synthetisch gerenderte Szenen, keine echten Kameraaufnahmen. Die Quelle deckt deutsche Verkehrszeichen ab und ist keine globale Taxonomie.
-
-Öffentlich sichtbare Bilder sind nicht automatisch frei für Training oder Weitergabe. TrafficSigns-Raw 0.2.0 ist laut Zenodo-Datensatzseite und beigefügter Lizenznotiz unter CC BY 4.0 veröffentlicht; die erforderliche Attribution ist in [training/README.md](training/README.md) dokumentiert. Die geografische Abdeckung der Quelle ist für unseren Pilot noch nicht ausreichend charakterisiert. Eine gesonderte rechtliche Prüfung für eine kommerzielle GEPARD-Anwendung ist nicht erfolgt. Weitere Quellen bleiben bis zur Prüfung ihrer Originalbedingungen gesperrt.
-
-## Technik
+## Technik und Tests
 
 - Web-Prototyp: HTML, CSS, JavaScript
 - Training und Evaluation: Python, PyTorch, torchvision, Pillow
-- aktueller Klassifikator: ResNet18, Feinabstimmung von `layer4` und Klassifikationskopf
-- spätere lokale Laufzeit: ONNX oder Core ML nach Kompatibilitäts- und Laufzeitmessungen
+- Klassifikator: ResNet18
+- Tests: `python -m unittest discover -s tests -v`
+- Trainingsworkflow: `.github/workflows/synthetic-training.yml`
 
-## Tests
+## Sicherheitsgrenzen
 
-Die Tests verwenden die Python-Standardbibliothek und Pillow; der CI-Workflow installiert Pillow automatisch:
-
-```bash
-python -m unittest discover -s tests -v
-```
-
-GitHub Actions führt diese Tests bei Änderungen an `main` und bei Pull Requests automatisch aus. Trainingsläufe sind separat und werden in den jeweiligen Workflow-Ergebnissen dokumentiert.
-
-## Web-Prototyp starten
-
-Die Dateien liegen in `web/`. Für Kamerazugriff im Browser sind üblicherweise HTTPS und eine ausdrückliche Berechtigung nötig. Die aktuelle Oberfläche ist eine Foto-/Vorschau-Demo, keine verbundene KI-Inferenz.
-
-## Sicherheit und Datenschutz
-
-- Smartphone-Tests ausschließlich im Stand; Gerät während der Fahrt nicht bedienen.
-- Keine Fahrzeugsteuerung und keine sicherheitskritischen Entscheidungen.
-- Ergebnisse können falsch oder unvollständig sein.
-- Nutzerbilder werden nicht ohne ausdrückliche Zustimmung hochgeladen.
-
-
-## Aktueller Detektionsbericht
-
-Der erste Realbild-Detektionslauf (GitHub Actions [Run 43492476620](https://github.com/TroBo2026/Schild-Pilot-/actions/runs/43492476620)) verarbeitete 3.167 Trainings-, 628 Validierungs- und 390 Testbilder. Das technische Audit fand keine Fehler, Warnungen oder byte-identischen Duplikate über die Splits. Der damalige Detektor erzielte auf Val bei IoU 0,5 und Score 0,25 jedoch 0 True Positives in allen drei Epochen. Der Job war technisch erfolgreich, das Modell fachlich nicht brauchbar. Der Testsplit wurde in diesem Lauf nicht ausgewertet. Details und Korrekturmaßnahmen: [Detektionsbericht](docs/DETECTION_PILOT_REPORT.md).
-
-Das CPU-Training ist bis zur Überprüfung der neuen Metrik- und Qualitätsschranke manuell auslösbar, nicht mehr bei jedem Push. Keine Modellgewichte werden automatisch in Git oder CI-Berichte hochgeladen.
-
-## iPhone-Außentest: aktueller Freigabestatus
-
-**Noch nicht für einen Erkennungstest auf öffentlichen Straßen freigegeben.** Die Weboberfläche unterstützt derzeit nur Fotoeingabe und Vorschau; ein Modell ist nicht mit der Oberfläche verbunden. Der Realbild-Detektor hat bislang keine brauchbaren Validierungstreffer nachgewiesen. Voraussetzungen, Sicherheitsregeln und messbare Freigabekriterien sind in [docs/IOS_FIELD_TEST_READINESS.md](docs/IOS_FIELD_TEST_READINESS.md) dokumentiert. Bis zur Erfüllung aller Gates nur die Fotoeingabe als UI-Demo im sicheren Stillstand testen; niemals während der Fahrt, beim Radfahren oder beim Überqueren einer Straße bedienen.
+Schild Pilot ist ein Lern- und Forschungsprototyp, keine Fahrassistenz. Keine Fahrzeugsteuerung und keine sicherheitskritischen Entscheidungen. Foto- und App-Tests nur im sicheren Stillstand; niemals während der Fahrt, beim Radfahren oder beim Überqueren einer Straße bedienen. Für reale Nutzung wären unabhängige echte Testdaten, eine funktionierende Detektion, robuste Unsicherheitsbehandlung und umfangreiche Sicherheitsvalidierung erforderlich.
