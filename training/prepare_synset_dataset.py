@@ -1,7 +1,7 @@
-"""Prepare a small, class-balanced pilot subset from Fraunhofer's Synset Signset.
+"""Prepare a large, class-balanced German traffic-sign dataset.
 
-The published dataset exposes train and validation splits (not a test split).
-We derive disjoint val/test subsets from its validation split and document this.
+The source exposes train and validation splits, but no official test split.
+We derive disjoint validation/test subsets from the source validation split.
 Images are synthetic rendered scenes, not real camera photographs.
 """
 from __future__ import annotations
@@ -47,10 +47,10 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--output", type=Path, default=Path("data/signs"))
     parser.add_argument("--config", default="Cycles")
-    parser.add_argument("--per-class-train", type=int, default=80)
-    parser.add_argument("--per-class-val", type=int, default=10)
-    parser.add_argument("--per-class-test", type=int, default=10)
-    parser.add_argument("--seed", type=int, default=20261113)
+    parser.add_argument("--per-class-train", type=int, default=350)
+    parser.add_argument("--per-class-val", type=int, default=50)
+    parser.add_argument("--per-class-test", type=int, default=50)
+    parser.add_argument("--seed", type=int, default=20261121)
     args = parser.parse_args()
     if min(args.per_class_train, args.per_class_val, args.per_class_test) < 1:
         raise SystemExit("Alle Stichprobengrößen müssen mindestens 1 sein.")
@@ -78,7 +78,10 @@ def main() -> None:
         rng.shuffle(heldout_pool)
         class_names[label] = str(train[train_pool[0]]["class_name"])
         if len(train_pool) < args.per_class_train:
-            raise SystemExit(f"Klasse {label}: zu wenige Trainingsbilder ({len(train_pool)}).")
+            raise SystemExit(
+                f"Klasse {label}: zu wenige Trainingsbilder ({len(train_pool)}); "
+                f"benötigt werden {args.per_class_train}."
+            )
         if len(heldout_pool) < args.per_class_val + args.per_class_test:
             raise SystemExit(
                 f"Klasse {label}: validation hat {len(heldout_pool)} Bilder; "
@@ -86,7 +89,9 @@ def main() -> None:
             )
         train_indices.extend(train_pool[:args.per_class_train])
         val_indices.extend(heldout_pool[:args.per_class_val])
-        test_indices.extend(heldout_pool[args.per_class_val:args.per_class_val + args.per_class_test])
+        test_indices.extend(
+            heldout_pool[args.per_class_val:args.per_class_val + args.per_class_test]
+        )
 
     for split_name in ("train", "val", "test"):
         target = args.output / split_name
@@ -117,7 +122,7 @@ def main() -> None:
         },
         "limitations": [
             "Synthetic scenes; not real camera photographs.",
-            "Validation source split is divided into disjoint val/test subsets; no official test split is published in this configuration.",
+            "Validation and test are disjoint subsets of the source validation split; no official test split is published in this configuration.",
             "German sign taxonomy only; not international coverage.",
             "Classification pilot; not a full-scene detector.",
             "Not validated for vehicle or safety-critical use.",
