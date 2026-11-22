@@ -8,6 +8,7 @@ Schild Pilot ist ein kostenloser, modularer Lern- und Forschungsprototyp zur Ver
 - Ablauf pro Zeichen: Schild und Bedeutung lernen → Quizfrage zum selben Schild → Antwortfeedback und Erklärung → nächstes Zeichen.
 - Fotoauswahl und lokale Bildvorschau.
 - Die Foto-KI ist noch nicht mit dem Web-Prototyp verbunden. Bei eigenen Fotos wird deshalb kein Erkennungsergebnis vorgetäuscht.
+- **Internationale Taxonomie ist noch nicht implementiert.** Die geplante Trennung von visueller Zeichenklasse und landesspezifischer rechtlicher Bedeutung ist in [docs/INTERNATIONAL_TAXONOMY.md](docs/INTERNATIONAL_TAXONOMY.md) beschrieben.
 
 ## KI-Trainingsstand
 
@@ -39,11 +40,12 @@ Der Trainingslauf erzeugte ein temporäres CI-Artefakt von 41.922.682 Bytes, das
 
 ## Architektur und nächste Schritte
 
-1. **Lernmodus:** geprüfte deutsche Zeichen und verständliche Erklärungen.
-2. **Klassifikation:** einen bereits ausgeschnittenen Schildbereich einer der 211 Klassen zuordnen.
-3. **Detektion:** Schilder in vollständigen Fotos finden. Der bisherige Realbild-Pilot hatte keine brauchbaren Validierungstreffer; diese Pipeline bleibt ein offener Entwicklungsbereich.
-4. **Integration:** Klassifikator und Detektor verbinden, Unsicherheit sauber behandeln und erst danach die Foto-KI im Frontend aktivieren.
-5. **iPhone:** spätere lokale Laufzeit und Offlinebetrieb, erst nach technischen Tests.
+1. **Internationale Taxonomie:** visuelle Klasse und landesspezifische Regel/Erklärung getrennt modellieren; derzeit nur Konzeptdokumentation.
+2. **Lernmodus:** geprüfte deutsche Zeichen und verständliche Erklärungen.
+3. **Klassifikation:** einen bereits ausgeschnittenen Schildbereich einer der 211 Klassen zuordnen.
+4. **Detektion:** Schilder in vollständigen Fotos finden. Der bisherige Realbild-Pilot hatte keine brauchbaren Validierungstreffer; diese Pipeline bleibt ein offener Entwicklungsbereich.
+5. **Integration:** Klassifikator und Detektor verbinden, Unsicherheit sauber behandeln und erst danach die Foto-KI im Frontend aktivieren.
+6. **iPhone:** spätere lokale Laufzeit und Offlinebetrieb, erst nach technischen Tests.
 
 ## Quellen, Daten und Lizenz
 
@@ -63,3 +65,5 @@ Der Trainingslauf erzeugte ein temporäres CI-Artefakt von 41.922.682 Bytes, das
 ## Sicherheitsgrenzen
 
 Schild Pilot ist ein Lern- und Forschungsprototyp, keine Fahrassistenz. Keine Fahrzeugsteuerung und keine sicherheitskritischen Entscheidungen. Foto- und App-Tests nur im sicheren Stillstand; niemals während der Fahrt, beim Radfahren oder beim Überqueren einer Straße bedienen. Für reale Nutzung wären unabhängige echte Testdaten, eine funktionierende Detektion, robuste Unsicherheitsbehandlung und umfangreiche Sicherheitsvalidierung erforderlich.
+
+---
