@@ -30,6 +30,17 @@
 
 **Interpretation:** Das ist ein synthetischer Klassifikationspilot, kein Nachweis für reale Straßenleistung. Der Quell-Datensatz stellt in der verwendeten Konfiguration keinen offiziellen Test-Split bereit. Val und Test sind disjunkt aus dem Quell-Split `validation` gezogen. Die Kennzahlen sind nicht auf reale Kameraaufnahmen oder andere Länder übertragbar.
 
+## Phase 1.5 – Internationale Taxonomie (Grundlagen)
+
+- [x] Design dokumentieren: visuelle Klasse, Jurisdiktion, Rechtsbedeutung und Lokalisierung getrennt
+- [ ] Offizielle Quelle und Gültigkeitsstand für eine zweite Jurisdiktion prüfen
+- [ ] Bild-/Annotation-Rechte für einen kleinen zweiten Zeichensatz klären
+- [ ] Reviewte Klassen-/Varianten-Zuordnung und unbekannte Fälle abbilden
+- [ ] Tests für Mapping, Jurisdiktion und Enthaltung ergänzen
+- [ ] Kleine zweite Lernlektion erst nach Quellen- und Rechtefreigabe erstellen
+
+Design: [International sign taxonomy](INTERNATIONAL_TAXONOMY.md). Die aktuelle Oberfläche und der Klassifikator bleiben deutsch-only; die Taxonomie ist noch nicht implementiert.
+
 ## Phase 2 – Detektion in vollständigen Straßenbildern
 - [x] Technisches COCO-Detektionsdaten-Audit mit Bounding-Box-, Referenz-, Klassen- und Exact-Duplicate-Prüfung vorbereiten
 - [x] Kleinen Realbild-Kandidaten TrafficSigns-Raw (CC BY 4.0, 4.185 Bilder, 8.249 geprüfte Boxen) identifizieren und Lizenz-/Provenienzprüfung dokumentieren
