@@ -4,6 +4,9 @@
 - [x] Repository- und Projektstruktur
 - [x] Mobile Fotoauswahl/-aufnahme im Browser (UI-Prototyp)
 - [x] Bildvorschau und klare Statusanzeige
+- [x] Lokale Bildtyp-/Größenprüfung (maximal 25 MB) und Freigabe alter Objekt-URLs
+- [x] JavaScript-Tests für ungültige Dateien, zu große Bilder, Vorschaufehler und Entfernen
+- [x] Erkennungsbutton bleibt deaktiviert, solange keine echte Modellinferenz integriert ist
 - [x] Modellunabhängige Enthaltungsregel und Unit-Tests
 - [ ] Modell-Schnittstelle und Inferenz in der Oberfläche
 
@@ -23,12 +26,12 @@
 
 ### Verifizierter synthetischer Pilot vom 13.11.2026
 
-- 211 deutsche Klassen; 80 Trainings-, 10 Validierungs- und 10 Testbilder je Klasse
+- 211 Klassen; 80 Trainings-, 10 Validierungs- und 10 Testbilder je Klasse
 - Test: 2.110 Bilder, Top-1 87,54 %, Top-5 96,68 %
 - Enthaltungsregel: 88,20 % Abdeckung; 93,93 % Genauigkeit auf akzeptierten Vorhersagen
 - Trainingslauf: [GitHub Actions 43472419845](https://github.com/TroBo2026/Schild-Pilot-/actions/runs/43472419845)
 
-**Interpretation:** Das ist ein synthetischer Klassifikationspilot, kein Nachweis für reale Straßenleistung. Der Quell-Datensatz stellt in der verwendeten Konfiguration keinen offiziellen Test-Split bereit. Val und Test sind disjunkt aus dem Quell-Split `validation` gezogen. Die Kennzahlen sind nicht auf reale Kameraaufnahmen oder andere Länder übertragbar.
+**Interpretation:** Das ist ein synthetischer Klassifikationspilot, kein Nachweis für reale Straßenleistung. Der Quell-Datensatz stellt in dieser Konfiguration keinen offiziellen Test-Split bereit. Val und Test sind disjunkt aus dem Quell-Split `validation` gezogen. Die Kennzahlen sind nicht auf reale Kameraaufnahmen oder andere Länder übertragbar.
 
 ## Phase 1.5 – Internationale Taxonomie (Grundlagen)
 
@@ -59,7 +62,7 @@ Design: [International sign taxonomy](INTERNATIONAL_TAXONOMY.md). Die aktuelle O
 
 - Datensatz: TrafficSigns-Raw 0.2.0, CC BY 4.0, DOI 10.5281/zenodo.22052437
 - Train 3.167 Bilder / 6.557 Boxen; Val 628 / 1.063; Test 390 / 629
-- Audit: 0 Fehler, 0 Warnungen, 0 exakte Duplikate über Splits
+- Audit: 0 Fehler, 0 Warnungen, 0 exakte Duplikate über die Splits
 - Erster Lauf #43492476620: 3 Epochen, zufällige Initialisierung, Score 0,25 / IoU 0,5; Val jeweils 0 TP, F1 0, steigender FP-Zähler 207 → 526 → 622
 - Der Lauf hat den Testsplit nicht ausgewertet. Ein erfolgreicher Workflow-Status bedeutete nur, dass der Prozess ohne Fehler beendet wurde, nicht dass der Detektor brauchbar war.
 - CPU-Training ist bis zur Korrektur manuell; Berichtsartefakte enthalten keine Modellgewichte.
@@ -80,6 +83,5 @@ Design: [International sign taxonomy](INTERNATIONAL_TAXONOMY.md). Die aktuelle O
 - Keine Nutzerbilder ohne ausdrückliche Zustimmung hochladen.
 - Keine Verbindung zur Fahrzeugsteuerung und keine Fahrassistenzfreigabe.
 - Smartphone-Tests ausschließlich im Stand.
-
 
 Aktueller Detektor-Workflow: https://github.com/TroBo2026/Schild-Pilot-/actions/workflows/real-image-detector.yml
