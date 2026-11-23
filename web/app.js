@@ -15,7 +15,7 @@ function signSvg(sign) {
     yield: svg('<path d="M34 45 L166 45 L100 166 Z" fill="#fff" stroke="#d6292f" stroke-width="13" stroke-linejoin="round"/>', sign.name),
     stop: svg('<polygon points="67,20 133,20 180,67 180,133 133,180 67,180 20,133 20,67" fill="#d8202f" stroke="#fff" stroke-width="8"/><text x="100" y="111" text-anchor="middle" font-size="43" font-weight="800" fill="#fff">STOP</text>', sign.name),
     noentry: svg('<circle cx="100" cy="100" r="76" fill="#d8202f"/><rect x="35" y="82" width="130" height="36" rx="4" fill="#fff"/>', sign.name),
-    speed: svg('<circle cx="100" cy="100" r="76" fill="#fff" stroke="#d8202f" stroke-width="13"/><text x="100" y="116" text-anchor="middle" font-size="58" font-weight="700" fill="#161616">50</text>', sign.name),
+    speed: svg('<circle cx="100" cy="100" r="76" fill="#fff" stroke="#d6292f" stroke-width="13"/><text x="100" y="116" text-anchor="middle" font-size="58" font-weight="700" fill="#161616">50</text>', sign.name),
     oneway: svg('<rect x="25" y="12" width="150" height="176" rx="7" fill="#0875b9" stroke="#fff" stroke-width="6"/><path d="M100 151 V48 M62 88 L100 48 L138 88" stroke="#fff" stroke-width="17" fill="none" stroke-linecap="round" stroke-linejoin="round"/>', sign.name),
     "priority-road": svg('<path d="M100 14 L186 100 L100 186 L14 100 Z" fill="#f4cf35" stroke="#fff" stroke-width="12"/><path d="M100 31 L169 100 L100 169 L31 100 Z" fill="#f4cf35" stroke="#1c1c1c" stroke-width="3"/>', sign.name),
     "all-vehicles": svg('<circle cx="100" cy="100" r="76" fill="#fff" stroke="#d8202f" stroke-width="13"/>', sign.name),
@@ -108,42 +108,15 @@ nextSign.addEventListener("click", () => {
 });
 renderLesson();
 
-// Fotoeingabe bleibt eine Vorschau. Ohne eingebundenes Modell wird kein Erkennungsergebnis erfunden.
-const input = document.querySelector("#imageInput");
-const wrap = document.querySelector("#previewWrap");
-const preview = document.querySelector("#preview");
-const analyze = document.querySelector("#analyzeButton");
-const clear = document.querySelector("#clearButton");
-const status = document.querySelector("#statusText");
-let objectUrl = null;
-input.addEventListener("change", () => {
-  const file = input.files?.[0];
-  if (!file) return;
-  if (!file.type.startsWith("image/")) {
-    status.textContent = "Bitte wähle eine Bilddatei aus.";
-    input.value = "";
-    return;
-  }
-  if (objectUrl) URL.revokeObjectURL(objectUrl);
-  objectUrl = URL.createObjectURL(file);
-  preview.src = objectUrl;
-  wrap.hidden = false;
-  analyze.disabled = false;
-  status.textContent = `Bild geladen: ${file.name} · ${Math.round(file.size / 1024)} KB`;
-  document.querySelector("#resultTitle").textContent = "Foto bereit – KI noch nicht verbunden";
-  document.querySelector("#resultText").textContent = "Die Fotoeingabe funktioniert. Die KI-Fotoerkennung wird erst nach Modellintegration und Tests aktiviert. Es wird kein Ergebnis geraten.";
-});
-clear.addEventListener("click", () => {
-  input.value = "";
-  preview.removeAttribute("src");
-  wrap.hidden = true;
-  analyze.disabled = true;
-  status.textContent = "Noch kein Bild ausgewählt. Die KI-Fotoerkennung ist noch nicht verbunden.";
-  if (objectUrl) URL.revokeObjectURL(objectUrl);
-  objectUrl = null;
-});
-analyze.addEventListener("click", () => {
-  document.querySelector("#resultTitle").textContent = "KI-Fotoerkennung noch nicht verbunden";
-  document.querySelector("#resultText").textContent = "Das Bild ist bereit. Der Lernmodus funktioniert bereits, die eigentliche Erkennung eigener Fotos folgt nach dem Training und der Integration des Modells.";
-  status.textContent = "Fotoeingabe bereit · Modellintegration folgt.";
+// Die Fotoeingabe bleibt lokal. Der Button zur Erkennung bleibt deaktiviert,
+// bis ein realer Detektor und die getrennte Klassifikation integriert und geprüft sind.
+SchildPilotPhotoInput.attachPhotoInput({
+  input: document.querySelector("#imageInput"),
+  previewWrap: document.querySelector("#previewWrap"),
+  preview: document.querySelector("#preview"),
+  analyzeButton: document.querySelector("#analyzeButton"),
+  clearButton: document.querySelector("#clearButton"),
+  statusText: document.querySelector("#statusText"),
+  resultTitle: document.querySelector("#resultTitle"),
+  resultText: document.querySelector("#resultText")
 });
