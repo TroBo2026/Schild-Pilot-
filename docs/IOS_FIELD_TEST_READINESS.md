@@ -1,6 +1,6 @@
 # iPhone- und Außentest-Freigabe – Schild Pilot
 
-Stand: 18.11.2026  
+Stand: 23.11.2026  
 Repository: `TroBo2026/Schild-Pilot-`  
 Gültiger Entwicklungsbranch: `main`
 
@@ -8,21 +8,26 @@ Gültiger Entwicklungsbranch: `main`
 
 **NICHT FREIGEGEBEN für einen Erkennungstest auf öffentlichen Straßen.**
 
-Die vorhandene Weboberfläche kann ein Foto auswählen bzw. aufnehmen und lokal anzeigen. Sie führt jedoch noch keine Modellinferenz aus. Der Detektor hat in seinem ersten Realbild-Versuch auf der Validierung null True Positives erreicht. Der Klassifikator wurde bislang nur mit synthetischen deutschen Szenen geprüft. Es gibt kein nachgewiesenes, kombiniertes Detektions-/Klassifikationssystem und keinen iPhone-Offline-Build.
+Die vorhandene Weboberfläche kann die Kamera-Quelle des Browsers anfordern bzw. ein Foto auswählen und es lokal anzeigen. Die Fotoeingabe prüft Bildtyp und Dateigröße (maximal 25 MB), gibt ersetzte Vorschau-Objekt-URLs frei und entfernt eine fehlerhafte Vorschau. Der Button für die Erkennung bleibt deaktiviert, solange kein echtes Modell integriert ist. Es findet keine Modellinferenz statt.
 
-Daher darf die aktuelle Oberfläche nicht als Verkehrszeichen-Erkennung oder als verlässliche Aussage über reale Schilder verstanden werden. Ein Kamerabild aufzunehmen ist möglich; ein fachlich sinnvoller Straßentest der Erkennung ist es noch nicht.
+Der Detektor hat in seinem ersten Realbild-Versuch auf der Validierung null True Positives erreicht. Der Klassifikator wurde bislang nur mit synthetischen deutschen Szenen geprüft. Es gibt kein nachgewiesenes, kombiniertes Detektions-/Klassifikationssystem und keinen iPhone-Offline-Build.
+
+Daher darf die aktuelle Oberfläche nicht als Verkehrszeichen-Erkennung oder als verlässliche Aussage über reale Schilder verstanden werden. Ein Kamerabild aufzunehmen ist möglich; ein fachlich sinnvoller Erkennungstest ist es noch nicht.
 
 ## Freigabestufen
 
-### Stufe A – Fotoeingabe ohne KI (bereits vorhanden, Demo)
+### Stufe A – Fotoeingabe ohne KI (Demo, teilweise geprüft)
 
 - [x] Foto auswählen oder Kamera-Quelle des Browsers anfordern
 - [x] Bildvorschau lokal anzeigen
+- [x] Bildtyp und Dateigröße prüfen; Dateien über 25 MB ablehnen
+- [x] Vorschau-Objekt-URLs beim Ersetzen/Entfernen freigeben
+- [x] Erkennungsbutton deaktiviert halten, bis echte Modellinferenz vorhanden ist
 - [x] Keine Erkennung vortäuschen; fehlende Modellinferenz klar anzeigen
 - [ ] iPhone-/Safari-Verhalten auf unterstützten Geräten dokumentieren
 - [ ] Prüfen, dass Bilddaten nicht übertragen werden (Netzwerk-Inspektion auf einem eigenen Testgerät)
 
-Diese Stufe testet nur die Bedienoberfläche, nicht die Verkehrszeichenerkennung.
+Diese Stufe testet nur die Bedienoberfläche, nicht die Verkehrszeichenerkennung. Die JavaScript-Logik wird mit Node-Unit-Tests geprüft; das ersetzt keinen Test auf einem echten iPhone.
 
 ### Stufe B – Lokale Modellinferenz (noch offen)
 
