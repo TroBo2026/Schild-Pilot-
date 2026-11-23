@@ -29,15 +29,16 @@
   </section>
 
   <section class="panel">
-    <div class="panel-head"><div><p class="eyebrow">FOTO-PROTOTYP</p><h3>Eigenes Bild vorbereiten</h3></div><span class="step">02 / 02</span></div>
+    <div class="panel-head"><div><p class="eyebrow">FOTO-PROTOTYP</p><h3>Foto aus der Umgebung aufnehmen</h3></div><span class="step">02 / 02</span></div>
     <label class="dropzone" for="imageInput"><span class="upload-icon">＋</span><strong>Foto aufnehmen oder auswählen</strong><span class="muted small">JPG, PNG oder WEBP · nur im sicheren Stillstand</span><input id="imageInput" type="file" accept="image/*" capture="environment"></label>
-    <div id="previewWrap" class="preview-wrap" hidden><img id="preview" alt="Ausgewähltes Testbild"><button id="clearButton" class="secondary" type="button">Bild entfernen</button></div>
-    <button id="analyzeButton" class="primary" type="button" disabled>Bild überprüfen</button>
-    <p id="statusText" class="hint" role="status">Noch kein Bild ausgewählt. Die KI-Fotoerkennung ist noch nicht verbunden.</p>
+    <div id="previewWrap" class="preview-wrap" hidden><img id="preview" alt="Lokal ausgewähltes Testbild"><button id="clearButton" class="secondary" type="button">Bild entfernen</button></div>
+    <button id="analyzeButton" class="primary" type="button" disabled>KI-Erkennung noch nicht verfügbar</button>
+    <p id="statusText" class="hint" role="status">Du kannst ein Foto aufnehmen und lokal ansehen. Die KI-Analyse ist noch nicht integriert.</p>
   </section>
 
   <section class="panel" aria-live="polite"><p class="eyebrow">MODELLSTATUS</p><h3 id="resultTitle">Lernmodus verfügbar</h3><p id="resultText" class="muted">Der Lernmodus verwendet einen geprüften, kleinen Katalog deutscher Verkehrszeichen. Die Foto-KI ist noch nicht mit dem Klassifikationsmodell verbunden; deshalb wird bei eigenen Fotos kein Ergebnis geraten.</p><div class="result-meta"><span>Deutsche Lernzeichen<b>8 im ersten Lernpaket</b></span><span>Foto-KI<b>in Entwicklung</b></span></div></section>
   <footer><p>Forschungs- und Lernprototyp · Keine Fahrassistenz</p><p>Gerät nur im Stand bedienen. Nicht während der Fahrt oder beim Radfahren verwenden.</p><p>Rechtsgrundlage: StVO, Anlagen 2 und 3.</p></footer>
 </main>
+<script src="photo-input.js"></script>
 <script src="app.js"></script>
 </body></html>
