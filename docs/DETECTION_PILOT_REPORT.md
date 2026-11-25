@@ -111,3 +111,24 @@ In diesem Lauf wurde kein Modell trainiert, kein Datensatz heruntergeladen und k
 ## Stichprobenauswahl der Boxen-Vorschau (20.11.2026)
 
 Die lokale Vorschau wählt annotierte Bilder jetzt nicht mehr ausschließlich zufällig aus. Ein deterministisches Greedy-Verfahren bevorzugt zunächst Bilder, die bislang nicht vertretene Kategorien abdecken; seltene Kategorien erhalten dabei ein höheres Gewicht (inverse Bildhäufigkeit). Wenn die Kategorieabdeckung erschöpft ist, werden verbleibende Plätze seeded-random gefüllt. Die Auswahl bleibt durch den Seed reproduzierbar. `report.json` dokumentiert die Strategie und die ausgewählten Kategorien. Diese Heuristik erhöht die Chance, Label-/Mappingfehler in einer kleinen Sichtprobe zu finden, garantiert aber keine vollständige Klassenabdeckung und ersetzt keine manuelle Sichtprüfung.
+
+
+## Split-weite Kategorienabdeckung der visuellen Stichprobe (25.11.2026)
+
+Die Vorschau `training.preview_detection_annotations` berichtet jetzt nicht nur die in der Stichprobe sichtbaren Klassen, sondern auch die Abdeckung gegenüber dem vollständigen gewählten Split:
+
+- je Kategorie: Anzahl der Bilder und Annotationen im gesamten Split;
+- je Kategorie: Anzahl der Bilder und Annotationen in der Stichprobe;
+- Bildabdeckungsanteil pro Kategorie;
+- Liste der Kategorien, die im Split vorkommen, aber in der Stichprobe fehlen;
+- Gesamtzahl annotierter Bilder sowie Anteil der ausgewählten Bilder.
+
+Damit lässt sich vor einer manuellen Sichtprüfung erkennen, welche Klassen eine kleine Stichprobe nicht enthält. Die Auswahl bleibt deterministisch und bevorzugt seltene Kategorien. Die Abdeckungszahlen prüfen nicht, ob Bounding Boxes oder Klassenlabels semantisch korrekt sind; das muss weiterhin visuell beurteilt werden.
+
+Geändert:
+- `training/preview_detection_annotations.py`: Split-/Stichproben-Zähler und Coverage-Felder in `report.json`.
+- `tests/test_detection_annotation_preview.py`: Regressionstest mit häufiger und seltener Kategorie sowie absichtlich nicht abgedeckter Klasse.
+
+GitHub Actions [Run 45672776945](https://github.com/TroBo2026/Schild-Pilot-/actions/runs/45672776945) auf `main`, Test-Commit `bcdc1b8738c822030a2bcc9235dabc10632a2f96`: Python-Kompilierung, **47 Python-Unit-Tests**, JavaScript-Syntaxprüfungen und Browser-Fotoeingabetests erfolgreich. Kein Realbild-Datensatz wurde heruntergeladen, kein Modell trainiert und keine Modellgewichte hochgeladen.
+
+Die Vorschau wurde weiterhin nur mit synthetischen Mini-Fixtures getestet. TrafficSigns-Raw wurde in dieser Runde nicht lokal visualisiert; die Ursache der Null-TP-Detektion bleibt offen.
