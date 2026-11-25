@@ -182,7 +182,7 @@ Beispiel für den Validierungssplit:
 python -m training.preview_detection_annotations --data data/detection --split val --samples 12 --seed 42 --output artifacts/detection_preview
 ```
 
-Danach `artifacts/detection_preview/index.html` lokal im Browser öffnen. `report.json` dokumentiert Bild-IDs, Quelldateinamen und Box-/Klassenanzahlen. Der Ausgabeordner liegt unter `artifacts/` und ist durch `.gitignore` vom Commit ausgeschlossen.
+Danach `artifacts/detection_preview/index.html` lokal im Browser öffnen. `report.json` dokumentiert Bild-IDs, Quelldateinamen und Box-/Klassenanzahlen. Zusätzlich enthält es je Kategorie die Bild- und Annotationsanzahl im gesamten Split und in der Stichprobe, den Bildabdeckungsanteil sowie Kategorien, die in der Stichprobe fehlen. So ist sichtbar, ob eine kleine Vorschau Klassen auslässt; die Kennzahlen sagen nichts über die inhaltliche Richtigkeit der Boxen aus. Der Ausgabeordner liegt unter `artifacts/` und ist durch `.gitignore` vom Commit ausgeschlossen.
 
 Das Werkzeug:
 - liest ausschließlich den angegebenen lokalen Split und verändert keine Quelldateien;
