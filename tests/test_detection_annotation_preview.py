@@ -149,5 +149,70 @@ class DetectionAnnotationPreviewTests(unittest.TestCase):
             self.assertEqual(report["sampled_categories"], ["common", "rare"])
             self.assertIn("inverse-frequency category coverage", report["sampling_strategy"])
 
+    def test_report_exposes_full_split_and_sample_category_coverage(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / "data"
+            split_dir = root / "val"
+            image_dir = split_dir / "images"
+            image_dir.mkdir(parents=True)
+            images = []
+            annotations = []
+            for image_id in range(1, 4):
+                filename = f"coverage_{image_id}.jpg"
+                Image.new("RGB", (64, 48), (20, image_id * 40, 100)).save(
+                    image_dir / filename
+                )
+                images.append({
+                    "id": image_id,
+                    "file_name": filename,
+                    "width": 64,
+                    "height": 48,
+                })
+                annotations.append({
+                    "id": image_id,
+                    "image_id": image_id,
+                    "category_id": 1 if image_id < 3 else 2,
+                    "bbox": [8, 7, 24, 18],
+                })
+
+            payload = {
+                "images": images,
+                "annotations": annotations,
+                "categories": [
+                    {"id": 1, "name": "common"},
+                    {"id": 2, "name": "rare"},
+                ],
+            }
+            (split_dir / "annotations.json").write_text(
+                json.dumps(payload), encoding="utf-8"
+            )
+
+            output = Path(tmp) / "preview"
+            report = generate_annotation_preview(
+                root, output, sample_count=1, seed=17
+            )
+            coverage = {
+                item["name"]: item for item in report["category_coverage"]
+            }
+
+            self.assertEqual(report["annotated_image_count_in_split"], 3)
+            self.assertEqual(report["sampled_image_fraction"], 0.3333)
+            self.assertEqual(report["category_count_in_split"], 2)
+            self.assertEqual(report["category_count_in_sample"], 1)
+            self.assertEqual(report["uncovered_categories"], ["common"])
+            self.assertEqual(coverage["common"]["split_image_count"], 2)
+            self.assertEqual(coverage["common"]["sample_image_count"], 0)
+            self.assertEqual(coverage["common"]["split_annotation_count"], 2)
+            self.assertEqual(coverage["rare"]["split_image_count"], 1)
+            self.assertEqual(coverage["rare"]["sample_image_count"], 1)
+            self.assertEqual(coverage["rare"]["image_coverage"], 1.0)
+
+            saved_report = json.loads(
+                (output / "report.json").read_text(encoding="utf-8")
+            )
+            self.assertEqual(
+                saved_report["uncovered_categories"], ["common"]
+            )
+
 if __name__ == "__main__":
     unittest.main()
