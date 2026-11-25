@@ -47,6 +47,7 @@ Design: [International sign taxonomy](INTERNATIONAL_TAXONOMY.md). Die aktuelle O
 ## Phase 2 – Detektion in vollständigen Straßenbildern
 - [x] Technisches COCO-Detektionsdaten-Audit mit Bounding-Box-, Referenz-, Klassen- und Exact-Duplicate-Prüfung vorbereiten
 - [x] Kleinen Realbild-Kandidaten TrafficSigns-Raw (CC BY 4.0, 4.185 Bilder, 8.249 geprüfte Boxen) identifizieren und Lizenz-/Provenienzprüfung dokumentieren
+- [x] Visuelle Stichprobenvorschau dokumentiert die Split-/Stichprobenabdeckung je Kategorie und listet nicht abgedeckte Kategorien
 - [x] TrafficSigns-Raw-Archiv, Lizenzdatei und SHA-256-Prüfsumme im isolierten CI-Runner verifizieren
 - [x] Datensatz-Intake, YOLO-zu-COCO-Konvertierung und technisches Audit im Detektor-Workflow implementieren
 - [x] Ersten CPU-Detektionsversuch ausführen und Kennzahlen dokumentieren (0 True Positives; kein brauchbares Modell)
