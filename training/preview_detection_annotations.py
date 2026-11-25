@@ -273,6 +273,54 @@ def generate_annotation_preview(
         sample_count,
         seed,
     )
+
+    selected_id_set = set(selected_ids)
+    split_image_counts: Counter[int] = Counter()
+    split_annotation_counts: Counter[int] = Counter()
+    sample_image_counts: Counter[int] = Counter()
+    sample_annotation_counts: Counter[int] = Counter()
+
+    for image_id in annotated_ids:
+        per_image_counts = Counter(
+            entry["category_id"] for entry in annotations_by_image[image_id]
+        )
+        for category_id, annotation_count in per_image_counts.items():
+            split_image_counts[category_id] += 1
+            split_annotation_counts[category_id] += annotation_count
+            if image_id in selected_id_set:
+                sample_image_counts[category_id] += 1
+                sample_annotation_counts[category_id] += annotation_count
+
+    category_coverage = []
+    for category_id, category_name in sorted(
+        categories.items(), key=lambda item: (item[1].casefold(), item[0])
+    ):
+        split_images = split_image_counts[category_id]
+        sampled_images = sample_image_counts[category_id]
+        category_coverage.append({
+            "category_id": category_id,
+            "name": category_name,
+            "split_image_count": split_images,
+            "sample_image_count": sampled_images,
+            "split_annotation_count": split_annotation_counts[category_id],
+            "sample_annotation_count": sample_annotation_counts[category_id],
+            "image_coverage": (
+                round(sampled_images / split_images, 4) if split_images else 0.0
+            ),
+        })
+
+    categories_in_split = sum(
+        1 for item in category_coverage if item["split_image_count"] > 0
+    )
+    categories_in_sample = sum(
+        1 for item in category_coverage if item["sample_image_count"] > 0
+    )
+    uncovered_categories = [
+        item["name"]
+        for item in category_coverage
+        if item["split_image_count"] > 0 and item["sample_image_count"] == 0
+    ]
+
     output_dir.mkdir(parents=True, exist_ok=True)
 
     preview_items = []
@@ -307,6 +355,12 @@ def generate_annotation_preview(
         "generated_preview_count": len(preview_items),
         "max_edge": max_edge,
         "sampling_strategy": "seeded greedy inverse-frequency category coverage; random fill after coverage",
+        "annotated_image_count_in_split": len(annotated_ids),
+        "sampled_image_fraction": round(len(preview_items) / len(annotated_ids), 4),
+        "category_count_in_split": categories_in_split,
+        "category_count_in_sample": categories_in_sample,
+        "category_coverage": category_coverage,
+        "uncovered_categories": uncovered_categories,
         "sampled_categories": sorted({
             category_name
             for item in preview_items
