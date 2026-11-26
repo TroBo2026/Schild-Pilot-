@@ -1,0 +1,135 @@
+name: Real-image annotation preview (no training)
+
+on:
+  workflow_dispatch:
+    inputs:
+      samples:
+        description: "Number of validation images to include (1–24)"
+        required: true
+        default: "12"
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: schild-pilot-annotation-preview-main
+  cancel-in-progress: true
+
+jobs:
+  annotation-preview:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Check out main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install preview dependency
+        run: python -m pip install "Pillow>=10.0"
+
+      - name: Validate sample count
+        env:
+          SAMPLE_COUNT: ${{ inputs.samples }}
+        run: |
+          case "$SAMPLE_COUNT" in
+            ""|*[!0-9]*) echo "samples muss eine ganze Zahl sein." >&2; exit 1 ;;
+          esac
+          if [ "$SAMPLE_COUNT" -lt 1 ] || [ "$SAMPLE_COUNT" -gt 24 ]; then
+            echo "samples muss zwischen 1 und 24 liegen." >&2
+            exit 1
+          fi
+
+      - name: Download the versioned Zenodo release
+        run: |
+          curl --fail --location --retry 3 \
+            "https://zenodo.org/records/22052437/files/object-centric-low-data-datasets-v0.2.0.zip?download=1" \
+            --output /tmp/traffic-signs-release.zip
+          echo "e1e162d114cfe14b209ab7614511524b0c558db72935d3e32c096f87150aff86  /tmp/traffic-signs-release.zip" | sha256sum --check
+
+      - name: Extract only TrafficSigns-Raw and its license notice
+        run: |
+          python - <<'PY'
+          import zipfile
+          from pathlib import Path
+
+          archive = "/tmp/traffic-signs-release.zip"
+          destination = Path("/tmp/traffic-signs-extracted")
+          with zipfile.ZipFile(archive) as source:
+              names = source.namelist()
+              readmes = [name for name in names if name.endswith("/traffic_signs_raw/README.md")]
+              licenses = [name for name in names if name.endswith("/LICENSES/traffic_signs_license.txt")]
+              if len(readmes) != 1 or len(licenses) != 1:
+                  raise SystemExit("TrafficSigns-Raw-README oder eindeutige Lizenzdatei fehlt.")
+              raw_prefix = readmes[0].rsplit("README.md", 1)[0]
+              license_path = licenses[0]
+              selected = [name for name in names if name.startswith(raw_prefix) or name == license_path]
+              for name in selected:
+                  if name.startswith("/") or ".." in name.split("/"):
+                      raise SystemExit(f"Unsicherer Archivpfad: {name}")
+              source.extractall(destination, selected)
+          (destination / "traffic_signs_raw_source_path.txt").write_text(raw_prefix, encoding="utf-8")
+          (destination / "traffic_signs_raw_license_path.txt").write_text(license_path, encoding="utf-8")
+          print(f"Nur TrafficSigns-Raw extrahiert: {raw_prefix}")
+          print(f"Zugehörige Lizenznotiz: {license_path}")
+          PY
+
+      - name: Convert the licensed source and audit all splits
+        run: |
+          set -euo pipefail
+          SOURCE_PATH="$(cat /tmp/traffic-signs-extracted/traffic_signs_raw_source_path.txt)"
+          LICENSE_PATH="$(cat /tmp/traffic-signs-extracted/traffic_signs_raw_license_path.txt)"
+          python -m training.prepare_traffic_signs_raw \
+            --source "/tmp/traffic-signs-extracted/$SOURCE_PATH" \
+            --license-file "/tmp/traffic-signs-extracted/$LICENSE_PATH" \
+            --output data/detection \
+            --report artifacts/traffic_signs_raw_intake.json
+          mkdir -p artifacts
+          cp "/tmp/traffic-signs-extracted/$LICENSE_PATH" artifacts/traffic_signs_raw_license.txt
+          python -m training.audit_detection_dataset \
+            --data data/detection \
+            --output artifacts/detection_audit.json
+
+      - name: Generate a validation-only visual preview
+        env:
+          SAMPLE_COUNT: ${{ inputs.samples }}
+        run: |
+          python -m training.preview_detection_annotations \
+            --data data/detection \
+            --split val \
+            --output artifacts/detection_preview \
+            --samples "$SAMPLE_COUNT" \
+            --seed 42 \
+            --max-edge 1600
+          cp artifacts/traffic_signs_raw_license.txt artifacts/detection_preview/ATTRIBUTION.txt
+          cat > artifacts/detection_preview/README.md <<'EOF'
+          # TrafficSigns-Raw annotation preview
+
+          Source: TrafficSigns-Raw 0.2.0, Vasile Marian, Yong-Bin Kang and Alexander Buddery.
+          DOI: https://doi.org/10.5281/zenodo.22052437
+          License: Creative Commons Attribution 4.0 International (CC BY 4.0).
+          License notice: see ATTRIBUTION.txt.
+
+          The preview contains selected validation images resized for display with
+          the source ground-truth bounding boxes overlaid. It is a manual annotation
+          review aid, not model output and not an evaluation of detector performance.
+          The original archive and full image dataset are not included in this artifact.
+          EOF
+
+      - name: Upload the small preview and audit reports only
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: schild-pilot-traffic-signs-annotation-preview
+          path: |
+            artifacts/detection_preview/
+            artifacts/detection_audit.json
+            artifacts/traffic_signs_raw_intake.json
+          if-no-files-found: error
+          retention-days: 7
