@@ -50,9 +50,12 @@ Design: [International sign taxonomy](INTERNATIONAL_TAXONOMY.md). Die aktuelle O
 - [x] Visuelle Stichprobenvorschau dokumentiert die Split-/Stichprobenabdeckung je Kategorie und listet nicht abgedeckte Kategorien
 - [x] TrafficSigns-Raw-Archiv, Lizenzdatei und SHA-256-Prüfsumme im isolierten CI-Runner verifizieren
 - [x] Datensatz-Intake, YOLO-zu-COCO-Konvertierung und technisches Audit im Detektor-Workflow implementieren
+- [x] Separaten manuellen Vorschau-Workflow ohne Training erstellen; Vorschau bleibt auf den Validierungssplit begrenzt
+- [x] Anleitung für die lokale Sichtprüfung und Attribution dokumentieren
 - [x] Ersten CPU-Detektionsversuch ausführen und Kennzahlen dokumentieren (0 True Positives; kein brauchbares Modell)
 - [x] Score-Schwellen-Sweep ausschließlich auf Validierungsdaten implementieren
 - [x] Testsplit nur nach positiver Validierung freigeben; Null-TP-Ergebnisse als fehlgeschlagen markieren
+- [ ] Echte Ground-Truth-Boxen und Labels anhand der erzeugten Vorschau manuell prüfen
 - [ ] Funktionierende Detektions-Baseline mit positiver Val- und Testleistung nachweisen
 - [ ] Detektor getrennt von der Klassifikation evaluieren
 - [ ] Mehrere Schilder pro Foto lokalisieren
@@ -67,6 +70,8 @@ Design: [International sign taxonomy](INTERNATIONAL_TAXONOMY.md). Die aktuelle O
 - Erster Lauf #43492476620: 3 Epochen, zufällige Initialisierung, Score 0,25 / IoU 0,5; Val jeweils 0 TP, F1 0, steigender FP-Zähler 207 → 526 → 622
 - Der Lauf hat den Testsplit nicht ausgewertet. Ein erfolgreicher Workflow-Status bedeutete nur, dass der Prozess ohne Fehler beendet wurde, nicht dass der Detektor brauchbar war.
 - CPU-Training ist bis zur Korrektur manuell; Berichtsartefakte enthalten keine Modellgewichte.
+
+**Sichtprüfung starten:** [GitHub Actions – Real-image annotation preview (no training)](../.github/workflows/annotation-preview.yml). Anleitung: [REAL_IMAGE_ANNOTATION_REVIEW.md](REAL_IMAGE_ANNOTATION_REVIEW.md). Der Workflow erzeugt ausschließlich eine kleine Vorschau und Prüfberichte; er trainiert kein Modell und lädt weder den vollständigen Datensatz noch Modellgewichte als Artefakt hoch.
 
 ## Phase 3 – Smartphone und Offline-Fähigkeit
 - [ ] Modell für eine lokale Browser- oder iOS-Laufzeit exportieren
