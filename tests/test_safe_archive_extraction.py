@@ -1,7 +1,6 @@
 import stat
 import tempfile
 import unittest
-import warnings
 import zipfile
 from pathlib import Path
 
@@ -104,6 +103,7 @@ class TrafficSignsRawSafeExtractionTests(unittest.TestCase):
             )
 
     def test_refuses_existing_destination(self):
+        self.write_archive(self.valid_entries())
         self.destination.mkdir()
         with self.assertRaises(FileExistsError):
             extract_traffic_signs_raw(self.archive, self.destination)
