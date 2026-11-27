@@ -73,3 +73,34 @@ Verkehrszeichen-Klassifikator und keine Fahrassistenz.
 Erst nach dokumentierter Sichtprüfung sollten Bild-/Box-Skalierung und
 Klassenmapping weiter diagnostiziert werden. Ein neuer Trainingslauf bleibt
 bis dahin gesperrt bzw. wird nicht gestartet.
+
+## Ressourcen- und Extraktionsgrenzen (27.11.2026)
+
+Die offizielle Zenodo-Dateiliste weist für das kombinierte Release-Archiv
+0.2.0 eine Downloadgröße von 382,7 MB aus. Das Archiv enthält neben
+TrafficSigns-Raw weitere Ressourcen; der Workflow lädt deshalb weiterhin das
+kombinierte ZIP, extrahiert aber ausschließlich den TrafficSigns-Raw-Unterbaum
+und die zugehörige Lizenznotiz. Cityscapes- und COCO-Unterdaten werden nicht
+extrahiert.
+
+Vor dem Download gilt eine harte Archivgrenze von 450.000.000 Bytes
+(curl --max-filesize plus nachgelagerte Größenprüfung). Die Extraktion prüft
+vorab und während des Schreibens zusätzlich:
+
+- höchstens 2.000.000.000 Bytes entpackte Daten insgesamt;
+- höchstens 100.000.000 Bytes je Datei;
+- höchstens 20.000 Dateien;
+- keine absoluten Pfade, ..-Komponenten, Backslashes, symbolischen Links,
+  verschlüsselten Einträge oder doppelten Zielpfade;
+- nur einen neu angelegten Zielordner; bei einem Extraktionsfehler wird dieser
+  wieder entfernt.
+
+Die Extraktionslogik liegt in
+training/extract_traffic_signs_raw.py; synthetische ZIP-Fixtures prüfen die
+Grenzen in tests/test_safe_archive_extraction.py. Pillow ist in beiden
+betroffenen GitHub-Workflows auf Version 11.3.0 festgelegt.
+
+Diese Grenzen sind technische Schutzplanken, keine Garantie für eine
+vollständige oder semantisch korrekte Datensatzprüfung. Der manuelle
+Vorschau-Workflow wurde in dieser Entwicklungsrunde nicht gestartet; es wurden
+keine echten Datensatzbilder heruntergeladen oder als Artefakt veröffentlicht.
