@@ -51,6 +51,7 @@ Design: [International sign taxonomy](INTERNATIONAL_TAXONOMY.md). Die aktuelle O
 - [x] TrafficSigns-Raw-Archiv, Lizenzdatei und SHA-256-Prüfsumme im isolierten CI-Runner verifizieren
 - [x] Datensatz-Intake, YOLO-zu-COCO-Konvertierung und technisches Audit im Detektor-Workflow implementieren
 - [x] Separaten manuellen Vorschau-Workflow ohne Training erstellen; Vorschau bleibt auf den Validierungssplit begrenzt
+- [x] Realbild-Intake mit Download-, Entpackgrößen-, Dateianzahl- und ZIP-Pfadgrenzen absichern; Pillow-Version in CI pinnen
 - [x] Anleitung für die lokale Sichtprüfung und Attribution dokumentieren
 - [x] Ersten CPU-Detektionsversuch ausführen und Kennzahlen dokumentieren (0 True Positives; kein brauchbares Modell)
 - [x] Score-Schwellen-Sweep ausschließlich auf Validierungsdaten implementieren
